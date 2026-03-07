@@ -3,6 +3,13 @@
 This repository is the monorepo scaffold for a teaching-oriented LSM-Tree simulator.
 Current task scope only includes project skeleton and health check.
 
+## Current Stage Notes
+
+- WAL is append-only JSONL in current stage; recovery/replay is intentionally not implemented yet.
+- MemTable is a teaching-oriented simplified implementation based on Python `dict` (not skiplist).
+- SSTable uses teaching-format files: data as JSONL and metadata as JSON.
+- Current flush implementation only writes to `level_0` (no multi-level scheduling yet).
+
 ## Structure
 
 - `backend/`: FastAPI service
