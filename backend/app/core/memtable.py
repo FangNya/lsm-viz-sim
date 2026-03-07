@@ -28,6 +28,13 @@ class MemTable:
             return None
         return record.value
 
+    def sorted_records(self) -> list[Record]:
+        return [self._records[key] for key in sorted(self._records.keys())]
+
+    def clear(self) -> None:
+        self._records.clear()
+        self._size_bytes = 0
+
     @property
     def size_records(self) -> int:
         return len(self._records)

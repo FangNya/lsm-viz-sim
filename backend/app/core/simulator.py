@@ -3,8 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.core.memtable import MemTable
+from app.core.sstable import SSTableManager
 from app.core.wal import WALManager
-from app.schemas import LSMConfig, Record, WALRecord
+from app.schemas import LSMConfig, Record, SSTableMeta, WALRecord
 
 
 @dataclass(slots=True)
@@ -26,13 +27,15 @@ class PutResult:
 
 
 class LSMSimulator:
-    """Minimal write-path simulator: WAL append then MemTable put."""
+    """Minimal write path + flush to level-0 SSTable for teaching use."""
 
     def __init__(self, config: LSMConfig) -> None:
         self.config = config
         self._next_seq = 0
         self.wal = WALManager(config.wal_dir)
         self.memtable = MemTable()
+        self.sstable = SSTableManager(config.data_dir)
+        self.level0_tables: list[SSTableMeta] = []
 
     def put(self, key: str, value: str) -> PutResult:
         self._next_seq += 1
@@ -55,3 +58,19 @@ class LSMSimulator:
             memtable_size_records=self.memtable.size_records,
             memtable_size_bytes=self.memtable.size_bytes,
         )
+
+    def flush_memtable(self) -> SSTableMeta | None:
+        records = self.memtable.sorted_records()
+        if not records:
+            return None
+
+        # Midterm simplification: WAL cleanup/replay is out of scope in this stage.
+        meta = self.sstable.flush_to_level0(records)
+        self.level0_tables.append(meta)
+        self.memtable.clear()
+        return meta
+
+    def list_levels(self) -> dict[str, list[dict]]:
+        return {
+            "level_0": [meta.model_dump(mode="json") for meta in self.level0_tables],
+        }
