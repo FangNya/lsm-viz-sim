@@ -3,11 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from app.core.compaction import CompactionResult, STCCompactionStrategy
+from app.core.compaction import (
+    CompactionResult,
+    CompactionStrategyBase,
+    LCSCompactionStrategy,
+    STCCompactionStrategy,
+)
 from app.core.memtable import MemTable
 from app.core.sstable import SSTableManager
 from app.core.wal import WALManager
-from app.schemas import LSMConfig, Record, SSTableMeta, WALRecord
+from app.schemas import CompactionStrategy, LSMConfig, Record, SSTableMeta, WALRecord
 
 
 @dataclass(slots=True)
@@ -49,7 +54,7 @@ class GetResult:
 
 
 class LSMSimulator:
-    """Teaching simulator for write path, flush, read path, and simplified STC."""
+    """Teaching simulator for write/read path and simplified compaction strategies."""
 
     def __init__(self, config: LSMConfig) -> None:
         self.config = config
@@ -60,12 +65,17 @@ class LSMSimulator:
         self.level_tables: dict[int, list[SSTableMeta]] = {0: []}
 
         # Midterm simplification: compaction runs synchronously after flush.
-        self.stc_strategy = STCCompactionStrategy()
+        self.compaction_strategy = self._build_compaction_strategy()
         self.compaction_history: list[CompactionResult] = []
 
     @property
     def level0_tables(self) -> list[SSTableMeta]:
         return self.level_tables.setdefault(0, [])
+
+    def _build_compaction_strategy(self) -> CompactionStrategyBase:
+        if self.config.compaction_strategy == CompactionStrategy.LCS.value:
+            return LCSCompactionStrategy()
+        return STCCompactionStrategy()
 
     def put(self, key: str, value: str) -> PutResult:
         self._next_seq += 1
@@ -105,8 +115,8 @@ class LSMSimulator:
     def run_compaction_cycle(self) -> list[CompactionResult]:
         results: list[CompactionResult] = []
         for level in range(max(self.config.max_levels - 1, 0)):
-            while self.stc_strategy.should_trigger(self, level):
-                result = self.stc_strategy.compact(self, level)
+            while self.compaction_strategy.should_trigger(self, level):
+                result = self.compaction_strategy.compact(self, level)
                 self.compaction_history.append(result)
                 results.append(result)
         return results

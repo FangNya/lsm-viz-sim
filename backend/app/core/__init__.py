@@ -1,5 +1,10 @@
 from .bloom import BloomFilter
-from .compaction import CompactionResult, CompactionStrategyBase, STCCompactionStrategy
+from .compaction import (
+    CompactionResult,
+    CompactionStrategyBase,
+    LCSCompactionStrategy,
+    STCCompactionStrategy,
+)
 from .memtable import MemTable
 from .simulator import GetResult, LSMSimulator, PutResult
 from .sstable import SSTableManager
@@ -11,6 +16,7 @@ __all__ = [
     "CompactionResult",
     "CompactionStrategyBase",
     "GetResult",
+    "LCSCompactionStrategy",
     "LSMSimulator",
     "LevelState",
     "MemTable",
