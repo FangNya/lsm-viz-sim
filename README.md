@@ -10,6 +10,7 @@ Current task scope only includes project skeleton and health check.
 - SSTable uses teaching-format files: data as JSONL and metadata as JSON.
 - Current flush implementation only writes to `level_0` (no multi-level scheduling yet).
 - Read path supports memtable + SSTable lookup, with per-SSTable Bloom filter fast skip.
+- STC compaction is a teaching-oriented simplified implementation, triggered synchronously after flush (not background async tasks).
 
 ## Structure
 
