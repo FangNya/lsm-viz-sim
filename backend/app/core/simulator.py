@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from app.core.memtable import MemTable
 from app.core.sstable import SSTableManager
@@ -26,16 +27,40 @@ class PutResult:
         }
 
 
+@dataclass(slots=True)
+class GetResult:
+    found: bool
+    value: str | None
+    source: str | None
+    level: int | None
+    table_id: str | None
+    path: list[dict[str, Any]]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "found": self.found,
+            "value": self.value,
+            "source": self.source,
+            "level": self.level,
+            "table_id": self.table_id,
+            "path": self.path,
+        }
+
+
 class LSMSimulator:
-    """Minimal write path + flush to level-0 SSTable for teaching use."""
+    """Teaching simulator for write path, flush, and minimal read path."""
 
     def __init__(self, config: LSMConfig) -> None:
         self.config = config
         self._next_seq = 0
         self.wal = WALManager(config.wal_dir)
         self.memtable = MemTable()
-        self.sstable = SSTableManager(config.data_dir)
-        self.level0_tables: list[SSTableMeta] = []
+        self.sstable = SSTableManager(config.data_dir, config.bloom_bits_per_key)
+        self.level_tables: dict[int, list[SSTableMeta]] = {0: []}
+
+    @property
+    def level0_tables(self) -> list[SSTableMeta]:
+        return self.level_tables.setdefault(0, [])
 
     def put(self, key: str, value: str) -> PutResult:
         self._next_seq += 1
@@ -70,7 +95,76 @@ class LSMSimulator:
         self.memtable.clear()
         return meta
 
+    def get(self, key: str) -> GetResult:
+        path: list[dict[str, Any]] = []
+
+        value = self.memtable.get(key)
+        if value is not None:
+            path.append({"step": "memtable", "result": "hit"})
+            return GetResult(
+                found=True,
+                value=value,
+                source="memtable",
+                level=None,
+                table_id=None,
+                path=path,
+            )
+        path.append({"step": "memtable", "result": "miss"})
+
+        for level in range(self.config.max_levels):
+            tables = self.level_tables.get(level, [])
+            ordered_tables = list(reversed(tables))
+
+            level_hit = False
+            for meta in ordered_tables:
+                bloom = self.sstable.load_bloom(meta)
+                if bloom is not None and not bloom.might_contain(key):
+                    path.append(
+                        {
+                            "step": "sstable",
+                            "level": level,
+                            "table_id": meta.table_id,
+                            "bloom": "definitely_not_present",
+                            "action": "skip",
+                        }
+                    )
+                    continue
+
+                path.append(
+                    {
+                        "step": "sstable",
+                        "level": level,
+                        "table_id": meta.table_id,
+                        "bloom": "maybe_present" if bloom is not None else "missing",
+                        "action": "scan",
+                    }
+                )
+                value = self.sstable.find_key(meta, key)
+                if value is not None:
+                    level_hit = True
+                    return GetResult(
+                        found=True,
+                        value=value,
+                        source="sstable",
+                        level=level,
+                        table_id=meta.table_id,
+                        path=path,
+                    )
+
+            if not level_hit:
+                path.append({"step": "level", "level": level, "result": "miss"})
+
+        return GetResult(
+            found=False,
+            value=None,
+            source=None,
+            level=None,
+            table_id=None,
+            path=path,
+        )
+
     def list_levels(self) -> dict[str, list[dict]]:
         return {
-            "level_0": [meta.model_dump(mode="json") for meta in self.level0_tables],
+            f"level_{level}": [meta.model_dump(mode="json") for meta in tables]
+            for level, tables in sorted(self.level_tables.items(), key=lambda item: item[0])
         }
