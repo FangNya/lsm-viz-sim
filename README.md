@@ -12,6 +12,7 @@ Current task scope only includes project skeleton and health check.
 - Read path supports memtable + SSTable lookup, with per-SSTable Bloom filter fast skip.
 - STC compaction is a teaching-oriented simplified implementation, triggered synchronously after flush (not background async tasks).
 - LCS compaction is also a teaching-oriented simplified implementation; omitted industrial features include seek-based trigger, advanced file picking heuristics, and tombstone-aware handling.
+- Metrics and trace are collected in-process, with stable JSON/CSV export for experiments.
 
 ## Structure
 
