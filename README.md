@@ -39,6 +39,69 @@ Health check:
 curl http://127.0.0.1:8000/health
 ```
 
+### API Endpoints
+
+- `POST /sim/reset`
+- `POST /sim/config`
+- `POST /sim/run_workload`
+- `POST /sim/step`
+- `GET /sim/state`
+- `GET /sim/export/trace?format=json|csv`
+- `WS /ws/events`
+
+### Example requests
+
+Set config:
+
+```bash
+curl -X POST http://127.0.0.1:8000/sim/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "memtable_max_records": 2,
+    "memtable_max_bytes": 1024,
+    "max_levels": 4,
+    "compaction_strategy": "stc",
+    "stc_trigger_tables": 2,
+    "l0_compaction_trigger_tables": 2,
+    "level_size_multiplier": 10.0,
+    "bloom_bits_per_key": 10,
+    "wal_dir": "./data/wal",
+    "data_dir": "./data/sst"
+  }'
+```
+
+Run workload:
+
+```bash
+curl -X POST http://127.0.0.1:8000/sim/run_workload \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operations": [
+      {"op": "put", "key": "k1", "value": "v1"},
+      {"op": "put", "key": "k2", "value": "v2"}
+    ]
+  }'
+```
+
+Get state:
+
+```bash
+curl http://127.0.0.1:8000/sim/state
+```
+
+### WebSocket
+
+Connect to `ws://127.0.0.1:8000/ws/events`.
+Server pushes messages like:
+
+```json
+{"type":"trace_event","payload":{...}}
+```
+
+```json
+{"type":"metrics_update","payload":{...}}
+```
+
 ### Test
 
 ```bash
