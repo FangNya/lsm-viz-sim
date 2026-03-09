@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
-from app.core.compaction import CompactionResult, STCCompactionStrategy
+from app.core.compaction import (
+    CompactionResult,
+    CompactionStrategyBase,
+    LCSCompactionStrategy,
+    STCCompactionStrategy,
+)
 from app.core.memtable import MemTable
 from app.core.sstable import SSTableManager
 from app.core.wal import WALManager
 from app.metrics import MetricsCollector
 from app.trace import TraceEmitter
-from app.schemas import LSMConfig, Record, SSTableMeta, WALRecord
+from app.schemas import CompactionStrategy, LSMConfig, Record, SSTableMeta, WALRecord
 
 
 @dataclass(slots=True)
@@ -52,7 +56,7 @@ class GetResult:
 
 
 class LSMSimulator:
-    """Teaching simulator for write path, flush, read path, and simplified STC."""
+    """Teaching simulator for write/read path and simplified compaction strategies."""
 
     def __init__(self, config: LSMConfig) -> None:
         self.config = config
@@ -62,7 +66,8 @@ class LSMSimulator:
         self.sstable = SSTableManager(config.data_dir, config.bloom_bits_per_key)
         self.level_tables: dict[int, list[SSTableMeta]] = {0: []}
 
-        self.stc_strategy = STCCompactionStrategy()
+        # Midterm simplification: compaction runs synchronously after flush.
+        self.compaction_strategy = self._build_compaction_strategy()
         self.compaction_history: list[CompactionResult] = []
 
         self.metrics = MetricsCollector()
@@ -72,6 +77,11 @@ class LSMSimulator:
     @property
     def level0_tables(self) -> list[SSTableMeta]:
         return self.level_tables.setdefault(0, [])
+
+    def _build_compaction_strategy(self) -> CompactionStrategyBase:
+        if self.config.compaction_strategy == CompactionStrategy.LCS.value:
+            return LCSCompactionStrategy()
+        return STCCompactionStrategy()
 
     def put(self, key: str, value: str) -> PutResult:
         self._next_seq += 1
@@ -148,21 +158,22 @@ class LSMSimulator:
 
     def run_compaction_cycle(self) -> list[CompactionResult]:
         results: list[CompactionResult] = []
+        strategy_name = str(self.config.compaction_strategy)
         for level in range(max(self.config.max_levels - 1, 0)):
-            while self.stc_strategy.should_trigger(self, level):
-                inputs = self.stc_strategy.select_inputs(self, level)
+            while self.compaction_strategy.should_trigger(self, level):
+                selected = self.compaction_strategy.select_inputs(self, level)
                 self.trace.emit(
                     event_type="compaction_start",
                     seq=self._next_seq,
                     payload={
-                        "strategy": "stc",
+                        "strategy": strategy_name,
                         "source_level": level,
                         "target_level": level + 1,
-                        "input_table_ids": [m.table_id for m in inputs],
+                        "input_table_ids": [m.table_id for m in selected],
                     },
                 )
 
-                result = self.stc_strategy.compact(self, level)
+                result = self.compaction_strategy.compact(self, level)
                 self.compaction_history.append(result)
                 results.append(result)
 
