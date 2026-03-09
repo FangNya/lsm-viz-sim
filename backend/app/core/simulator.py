@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from app.core.compaction import CompactionResult, STCCompactionStrategy
 from app.core.memtable import MemTable
 from app.core.sstable import SSTableManager
 from app.core.wal import WALManager
@@ -48,7 +49,7 @@ class GetResult:
 
 
 class LSMSimulator:
-    """Teaching simulator for write path, flush, and minimal read path."""
+    """Teaching simulator for write path, flush, read path, and simplified STC."""
 
     def __init__(self, config: LSMConfig) -> None:
         self.config = config
@@ -57,6 +58,10 @@ class LSMSimulator:
         self.memtable = MemTable()
         self.sstable = SSTableManager(config.data_dir, config.bloom_bits_per_key)
         self.level_tables: dict[int, list[SSTableMeta]] = {0: []}
+
+        # Midterm simplification: compaction runs synchronously after flush.
+        self.stc_strategy = STCCompactionStrategy()
+        self.compaction_history: list[CompactionResult] = []
 
     @property
     def level0_tables(self) -> list[SSTableMeta]:
@@ -93,7 +98,18 @@ class LSMSimulator:
         meta = self.sstable.flush_to_level0(records)
         self.level0_tables.append(meta)
         self.memtable.clear()
+
+        self.run_compaction_cycle()
         return meta
+
+    def run_compaction_cycle(self) -> list[CompactionResult]:
+        results: list[CompactionResult] = []
+        for level in range(max(self.config.max_levels - 1, 0)):
+            while self.stc_strategy.should_trigger(self, level):
+                result = self.stc_strategy.compact(self, level)
+                self.compaction_history.append(result)
+                results.append(result)
+        return results
 
     def get(self, key: str) -> GetResult:
         path: list[dict[str, Any]] = []
