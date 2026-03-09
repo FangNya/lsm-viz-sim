@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from app.core.compaction import CompactionResult, STCCompactionStrategy
 from app.core.memtable import MemTable
 from app.core.sstable import SSTableManager
 from app.core.wal import WALManager
+from app.metrics import MetricsCollector
+from app.trace import TraceEmitter
 from app.schemas import LSMConfig, Record, SSTableMeta, WALRecord
 
 
@@ -59,9 +62,12 @@ class LSMSimulator:
         self.sstable = SSTableManager(config.data_dir, config.bloom_bits_per_key)
         self.level_tables: dict[int, list[SSTableMeta]] = {0: []}
 
-        # Midterm simplification: compaction runs synchronously after flush.
         self.stc_strategy = STCCompactionStrategy()
         self.compaction_history: list[CompactionResult] = []
+
+        self.metrics = MetricsCollector()
+        self.trace = TraceEmitter()
+        self._refresh_metrics("init")
 
     @property
     def level0_tables(self) -> list[SSTableMeta]:
@@ -73,13 +79,24 @@ class LSMSimulator:
 
         wal_record = WALRecord(key=key, value=value, seq=seq)
         self.wal.append(wal_record)
+        self.metrics.add_io_writes(1)
 
         self.memtable.put(Record(key=key, value=value, seq=seq))
+        self.metrics.add_io_writes(1)
+        self.metrics.inc_put()
+
+        self.trace.emit(
+            event_type="put",
+            seq=seq,
+            payload={"key": key, "value_size": len(value), "wal_file": str(self.wal.wal_file)},
+        )
 
         needs_flush = (
             self.memtable.size_records >= self.config.memtable_max_records
             or self.memtable.size_bytes >= self.config.memtable_max_bytes
         )
+
+        self._refresh_metrics("put")
 
         return PutResult(
             success=True,
@@ -94,11 +111,38 @@ class LSMSimulator:
         if not records:
             return None
 
-        # Midterm simplification: WAL cleanup/replay is out of scope in this stage.
+        self.trace.emit(
+            event_type="flush_start",
+            seq=self._next_seq,
+            payload={"input_records": len(records), "target_level": 0},
+        )
+
         meta = self.sstable.flush_to_level0(records)
         self.level0_tables.append(meta)
         self.memtable.clear()
 
+        self.metrics.inc_flush()
+        self.metrics.add_io_writes(len(records) + 2)
+
+        self.trace.emit(
+            event_type="sstable_created",
+            seq=self._next_seq,
+            payload={
+                "table_id": meta.table_id,
+                "level": meta.level,
+                "record_count": meta.record_count,
+                "data_file": meta.data_file,
+                "meta_file": meta.meta_file,
+                "bloom_file": meta.bloom_file,
+            },
+        )
+        self.trace.emit(
+            event_type="flush_end",
+            seq=self._next_seq,
+            payload={"table_id": meta.table_id, "level": 0},
+        )
+
+        self._refresh_metrics("flush")
         self.run_compaction_cycle()
         return meta
 
@@ -106,18 +150,64 @@ class LSMSimulator:
         results: list[CompactionResult] = []
         for level in range(max(self.config.max_levels - 1, 0)):
             while self.stc_strategy.should_trigger(self, level):
+                inputs = self.stc_strategy.select_inputs(self, level)
+                self.trace.emit(
+                    event_type="compaction_start",
+                    seq=self._next_seq,
+                    payload={
+                        "strategy": "stc",
+                        "source_level": level,
+                        "target_level": level + 1,
+                        "input_table_ids": [m.table_id for m in inputs],
+                    },
+                )
+
                 result = self.stc_strategy.compact(self, level)
                 self.compaction_history.append(result)
                 results.append(result)
+
+                self.metrics.inc_compaction()
+                self.metrics.add_io_reads(max(len(result.input_table_ids), 1))
+                output_count = 0
+                target_tables = self.level_tables.get(result.target_level, [])
+                for table in target_tables:
+                    if table.table_id == result.output_table_id:
+                        output_count = table.record_count
+                        break
+                self.metrics.add_io_writes(output_count + 2)
+
+                self.trace.emit(
+                    event_type="sstable_created",
+                    seq=self._next_seq,
+                    payload={
+                        "table_id": result.output_table_id,
+                        "level": result.target_level,
+                        "created_by": "compaction",
+                    },
+                )
+                self.trace.emit(
+                    event_type="compaction_end",
+                    seq=self._next_seq,
+                    payload={
+                        "strategy": result.strategy,
+                        "source_level": result.source_level,
+                        "target_level": result.target_level,
+                        "input_table_ids": result.input_table_ids,
+                        "output_table_id": result.output_table_id,
+                    },
+                )
+
+                self._refresh_metrics("compaction")
         return results
 
     def get(self, key: str) -> GetResult:
         path: list[dict[str, Any]] = []
+        self.metrics.inc_get()
 
         value = self.memtable.get(key)
         if value is not None:
             path.append({"step": "memtable", "result": "hit"})
-            return GetResult(
+            result = GetResult(
                 found=True,
                 value=value,
                 source="memtable",
@@ -125,6 +215,9 @@ class LSMSimulator:
                 table_id=None,
                 path=path,
             )
+            self.trace.emit("get", self._next_seq, {"key": key, **result.to_dict()})
+            self._refresh_metrics("get")
+            return result
         path.append({"step": "memtable", "result": "miss"})
 
         for level in range(self.config.max_levels):
@@ -134,17 +227,30 @@ class LSMSimulator:
             level_hit = False
             for meta in ordered_tables:
                 bloom = self.sstable.load_bloom(meta)
-                if bloom is not None and not bloom.might_contain(key):
-                    path.append(
-                        {
-                            "step": "sstable",
-                            "level": level,
-                            "table_id": meta.table_id,
-                            "bloom": "definitely_not_present",
-                            "action": "skip",
-                        }
+                if bloom is not None:
+                    self.metrics.add_io_reads(1)
+                    if not bloom.might_contain(key):
+                        self.trace.emit(
+                            event_type="bloom_miss",
+                            seq=self._next_seq,
+                            payload={"key": key, "level": level, "table_id": meta.table_id},
+                        )
+                        path.append(
+                            {
+                                "step": "sstable",
+                                "level": level,
+                                "table_id": meta.table_id,
+                                "bloom": "definitely_not_present",
+                                "action": "skip",
+                            }
+                        )
+                        continue
+
+                    self.trace.emit(
+                        event_type="bloom_hit",
+                        seq=self._next_seq,
+                        payload={"key": key, "level": level, "table_id": meta.table_id},
                     )
-                    continue
 
                 path.append(
                     {
@@ -155,10 +261,11 @@ class LSMSimulator:
                         "action": "scan",
                     }
                 )
+                self.metrics.add_io_reads(1)
                 value = self.sstable.find_key(meta, key)
                 if value is not None:
                     level_hit = True
-                    return GetResult(
+                    result = GetResult(
                         found=True,
                         value=value,
                         source="sstable",
@@ -166,11 +273,14 @@ class LSMSimulator:
                         table_id=meta.table_id,
                         path=path,
                     )
+                    self.trace.emit("get", self._next_seq, {"key": key, **result.to_dict()})
+                    self._refresh_metrics("get")
+                    return result
 
             if not level_hit:
                 path.append({"step": "level", "level": level, "result": "miss"})
 
-        return GetResult(
+        result = GetResult(
             found=False,
             value=None,
             source=None,
@@ -178,9 +288,35 @@ class LSMSimulator:
             table_id=None,
             path=path,
         )
+        self.trace.emit("get", self._next_seq, {"key": key, **result.to_dict()})
+        self._refresh_metrics("get")
+        return result
 
     def list_levels(self) -> dict[str, list[dict]]:
         return {
             f"level_{level}": [meta.model_dump(mode="json") for meta in tables]
             for level, tables in sorted(self.level_tables.items(), key=lambda item: item[0])
         }
+
+    def export_metrics_json(self, file_path: str) -> str:
+        self._refresh_metrics("export_metrics_json")
+        return self.metrics.export_json(file_path)
+
+    def export_metrics_csv(self, file_path: str) -> str:
+        self._refresh_metrics("export_metrics_csv")
+        return self.metrics.export_csv(file_path)
+
+    def export_trace_json(self, file_path: str) -> str:
+        return self.trace.export_json(file_path)
+
+    def export_trace_csv(self, file_path: str) -> str:
+        return self.trace.export_csv(file_path)
+
+    def _refresh_metrics(self, reason: str) -> None:
+        self.metrics.set_memtable_stats(
+            records=self.memtable.size_records,
+            size_bytes=self.memtable.size_bytes,
+        )
+        counts = {level: len(tables) for level, tables in self.level_tables.items()}
+        self.metrics.set_sstable_counts(counts)
+        self.metrics.capture(reason)
