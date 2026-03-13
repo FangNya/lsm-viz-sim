@@ -121,6 +121,8 @@ npm run dev
 
 Open `http://127.0.0.1:5173` and verify page title `LSM-Tree Simulator`.
 
+This frontend is the midterm minimum demo page: feature completeness first, visual polish can be iterated later.
+
 ### Build
 
 ```bash
@@ -137,3 +139,4 @@ docker compose up --build
 
 - Backend: `http://127.0.0.1:8000/health`
 - Frontend: `http://127.0.0.1:5173`
+
