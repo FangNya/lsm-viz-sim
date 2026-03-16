@@ -1,0 +1,32 @@
+{
+  "description": "Writes overlapping key ranges in batches so Level 0 files have intersecting ranges and LCS is forced to merge overlapping tables.",
+  "operations": [
+    {"op": "put", "key": "k020", "value": "a1"},
+    {"op": "put", "key": "k021", "value": "a2"},
+    {"op": "put", "key": "k022", "value": "a3"},
+    {"op": "put", "key": "k023", "value": "a4"},
+    {"op": "put", "key": "k010", "value": "b1"},
+    {"op": "put", "key": "k011", "value": "b2"},
+    {"op": "put", "key": "k012", "value": "b3"},
+    {"op": "put", "key": "k013", "value": "b4"},
+    {"op": "put", "key": "k018", "value": "c1"},
+    {"op": "put", "key": "k019", "value": "c2"},
+    {"op": "put", "key": "k020", "value": "c3"},
+    {"op": "put", "key": "k021", "value": "c4"},
+    {"op": "put", "key": "k014", "value": "d1"},
+    {"op": "put", "key": "k015", "value": "d2"},
+    {"op": "put", "key": "k016", "value": "d3"},
+    {"op": "put", "key": "k017", "value": "d4"},
+    {"op": "put", "key": "k022", "value": "e1"},
+    {"op": "put", "key": "k023", "value": "e2"},
+    {"op": "put", "key": "k024", "value": "e3"},
+    {"op": "put", "key": "k025", "value": "e4"},
+    {"op": "put", "key": "k012", "value": "f1"},
+    {"op": "put", "key": "k013", "value": "f2"},
+    {"op": "put", "key": "k014", "value": "f3"},
+    {"op": "put", "key": "k015", "value": "f4"},
+    {"op": "get", "key": "k020"},
+    {"op": "get", "key": "k014"},
+    {"op": "get", "key": "k099"}
+  ]
+}

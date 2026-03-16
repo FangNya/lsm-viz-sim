@@ -1,0 +1,29 @@
+{
+  "baseline": {
+    "memtable_max_records": 8,
+    "memtable_max_bytes": 4096,
+    "max_levels": 4,
+    "stc_trigger_tables": 3,
+    "l0_compaction_trigger_tables": 3,
+    "level_size_multiplier": 10.0,
+    "bloom_bits_per_key": 10
+  },
+  "aggressive_compaction": {
+    "memtable_max_records": 4,
+    "memtable_max_bytes": 512,
+    "max_levels": 4,
+    "stc_trigger_tables": 2,
+    "l0_compaction_trigger_tables": 2,
+    "level_size_multiplier": 4.0,
+    "bloom_bits_per_key": 10
+  },
+  "overlap_pressure": {
+    "memtable_max_records": 3,
+    "memtable_max_bytes": 384,
+    "max_levels": 5,
+    "stc_trigger_tables": 3,
+    "l0_compaction_trigger_tables": 2,
+    "level_size_multiplier": 3.0,
+    "bloom_bits_per_key": 10
+  }
+}
