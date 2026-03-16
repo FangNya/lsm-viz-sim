@@ -1,7 +1,7 @@
-# LSM-Tree Visual Simulator (Teaching Prototype)
+﻿# LSM-Tree Visual Simulator (Teaching Prototype)
 
-This repository is the monorepo scaffold for a teaching-oriented LSM-Tree simulator.
-Current task scope only includes project skeleton and health check.
+This repository is a teaching-oriented LSM-Tree simulator prototype for midterm defense demos.
+The focus is on clarity, observability, and reproducible experiments, not industrial-grade storage.
 
 ## Current Stage Notes
 
@@ -18,8 +18,8 @@ Current task scope only includes project skeleton and health check.
 
 - `backend/`: FastAPI service
 - `frontend/`: Vue 3 + TypeScript + Vite app
-- `docs/`: project docs
-- `experiments/`: reproducible experiment outputs
+- `docs/`: project docs (midterm demo script)
+- `experiments/`: reproducible experiments (workloads + outputs)
 
 ## Backend
 
@@ -140,3 +140,29 @@ docker compose up --build
 - Backend: `http://127.0.0.1:8000/health`
 - Frontend: `http://127.0.0.1:5173`
 
+## Experiments
+
+Workloads are stored in `experiments/workloads/` and executed by a simple runner.
+The script runs each workload under both STC and LCS and exports metrics/trace plus
+a summary for strategy comparison.
+
+```bash
+python experiments/run_workloads.py
+```
+
+Outputs are written under `experiments/output/`:
+
+- `summary.json` / `summary.csv` (includes `flush_count`, `compaction_count`,
+  `sstable_count_by_level`, `read_amplification`, `write_amplification`)
+- Per-workload, per-strategy artifacts:
+  - `metrics.json` / `metrics.csv`
+  - `trace.json` / `trace.csv`
+
+### Workload presets
+
+- `write_heavy.json`: write-heavy workload
+- `mixed_read_write.json`: mixed read/write workload
+
+## Midterm Demo Script
+
+See `docs/midterm-demo.md` for a step-by-step demo flow and the completed/unfinished checklist.

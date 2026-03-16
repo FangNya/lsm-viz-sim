@@ -1,0 +1,17 @@
+[
+  {"op": "put", "key": "k1", "value": "v1"},
+  {"op": "put", "key": "k2", "value": "v2"},
+  {"op": "get", "key": "k1"},
+  {"op": "put", "key": "k3", "value": "v3"},
+  {"op": "get", "key": "k2"},
+  {"op": "put", "key": "k4", "value": "v4"},
+  {"op": "put", "key": "k5", "value": "v5"},
+  {"op": "get", "key": "k4"},
+  {"op": "put", "key": "k6", "value": "v6"},
+  {"op": "put", "key": "k7", "value": "v7"},
+  {"op": "get", "key": "k9"},
+  {"op": "put", "key": "k8", "value": "v8"},
+  {"op": "get", "key": "k8"},
+  {"op": "put", "key": "k9", "value": "v9"},
+  {"op": "get", "key": "k3"}
+]
