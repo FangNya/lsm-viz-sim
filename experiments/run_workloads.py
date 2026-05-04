@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import shutil
 from pathlib import Path
 import sys
 from typing import Any
@@ -15,21 +16,44 @@ if str(BACKEND) not in sys.path:
 from app.core import LSMSimulator
 from app.schemas import LSMConfig
 
+WORKLOADS_DIR = ROOT / "experiments" / "workloads"
+PROFILES_PATH = ROOT / "experiments" / "config_profiles.json"
+DEFAULT_WORKLOADS = [
+    "write_heavy",
+    "mixed_read_write",
+    "write_heavy_long",
+    "overwrite_hotspot",
+    "range_overlap_stress",
+]
+DEFAULT_PROFILES = [
+    "baseline",
+    "aggressive_compaction",
+    "overlap_pressure",
+]
 
-def load_workload(path: Path) -> list[dict[str, Any]]:
+
+def load_workload(path: Path) -> tuple[list[dict[str, Any]], str]:
     payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, list):
-        raise ValueError("workload JSON must be a list")
-    return payload
+    if isinstance(payload, list):
+        return payload, ""
+    if isinstance(payload, dict) and isinstance(payload.get("operations"), list):
+        description = str(payload.get("description", ""))
+        return payload["operations"], description
+    raise ValueError("workload JSON must be a list or an object with an operations list")
+
+
+def load_profiles(path: Path) -> dict[str, dict[str, Any]]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("config profiles JSON must be an object keyed by profile name")
+    return {str(name): dict(config) for name, config in payload.items()}
 
 
 def run_workload(sim: LSMSimulator, workload: list[dict[str, Any]]) -> None:
     for item in workload:
         op = item.get("op")
         if op == "put":
-            key = str(item["key"])
-            value = str(item["value"])
-            result = sim.put(key, value)
+            result = sim.put(str(item["key"]), str(item["value"]))
             if result.needs_flush:
                 sim.flush_memtable()
         elif op == "get":
@@ -37,14 +61,13 @@ def run_workload(sim: LSMSimulator, workload: list[dict[str, Any]]) -> None:
         else:
             raise ValueError(f"unsupported op: {op}")
 
-    # Ensure tail memtable is flushed for reproducible SSTable counts.
     if sim.memtable.size_records > 0:
         sim.flush_memtable()
 
 
 def summarize(sim: LSMSimulator) -> dict[str, Any]:
     levels = sim.list_levels()
-    counts = {k: len(v) for k, v in levels.items()}
+    counts = {level: len(tables) for level, tables in levels.items()}
     snapshot = sim.metrics.snapshot
     return {
         "flush_count": snapshot.flush_count,
@@ -58,26 +81,46 @@ def summarize(sim: LSMSimulator) -> dict[str, Any]:
 def export_summary_csv(rows: list[dict[str, Any]], path: Path) -> None:
     headers = [
         "workload",
+        "profile",
         "strategy",
+        "operation_count",
         "flush_count",
         "compaction_count",
         "sstable_count_by_level",
         "read_amplification",
         "write_amplification",
     ]
-    with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=headers)
+    with path.open("w", newline="", encoding="utf-8") as file_obj:
+        writer = csv.DictWriter(file_obj, fieldnames=headers)
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
 
 
+def build_config(
+    profile_name: str,
+    profile_config: dict[str, Any],
+    strategy: str,
+    wal_dir: Path,
+    data_dir: Path,
+) -> LSMConfig:
+    config_values = {
+        **profile_config,
+        "compaction_strategy": strategy,
+        "wal_dir": str(wal_dir),
+        "data_dir": str(data_dir),
+    }
+    return LSMConfig(**config_values)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--workloads", nargs="*", default=["write_heavy", "mixed_read_write"])
+    parser.add_argument("--workloads", nargs="*", default=DEFAULT_WORKLOADS)
+    parser.add_argument("--profiles", nargs="*", default=DEFAULT_PROFILES)
     parser.add_argument("--out", default=str(ROOT / "experiments" / "output"))
     args = parser.parse_args()
 
+    profiles = load_profiles(PROFILES_PATH)
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -85,62 +128,68 @@ def main() -> None:
     summary_json: list[dict[str, Any]] = []
 
     for workload_name in args.workloads:
-        workload_path = ROOT / "experiments" / "workloads" / f"{workload_name}.json"
-        workload = load_workload(workload_path)
+        workload_path = WORKLOADS_DIR / f"{workload_name}.json"
+        workload, workload_description = load_workload(workload_path)
 
-        for strategy in ["stc", "lcs"]:
-            run_dir = out_dir / workload_name / strategy
-            data_dir = run_dir / "data"
-            wal_dir = run_dir / "wal"
-            run_dir.mkdir(parents=True, exist_ok=True)
+        for profile_name in args.profiles:
+            if profile_name not in profiles:
+                raise ValueError(f"unknown profile: {profile_name}")
+            profile_config = profiles[profile_name]
 
-            config = LSMConfig(
-                memtable_max_records=8,
-                memtable_max_bytes=4096,
-                max_levels=4,
-                compaction_strategy=strategy,
-                stc_trigger_tables=3,
-                l0_compaction_trigger_tables=3,
-                level_size_multiplier=10.0,
-                bloom_bits_per_key=10,
-                wal_dir=str(wal_dir),
-                data_dir=str(data_dir),
-            )
-            sim = LSMSimulator(config)
-            run_workload(sim, workload)
+            for strategy in ["stc", "lcs"]:
+                run_dir = out_dir / workload_name / profile_name / strategy
+                if run_dir.exists():
+                    shutil.rmtree(run_dir)
+                data_dir = run_dir / "data"
+                wal_dir = run_dir / "wal"
+                run_dir.mkdir(parents=True, exist_ok=True)
 
-            metrics_json = sim.export_metrics_json(str(run_dir / "metrics.json"))
-            metrics_csv = sim.export_metrics_csv(str(run_dir / "metrics.csv"))
-            trace_json = sim.export_trace_json(str(run_dir / "trace.json"))
-            trace_csv = sim.export_trace_csv(str(run_dir / "trace.csv"))
+                config = build_config(profile_name, profile_config, strategy, wal_dir, data_dir)
+                (run_dir / "config.json").write_text(
+                    json.dumps(config.model_dump(mode="json"), ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
 
-            summary = summarize(sim)
-            summary_record = {
-                "workload": workload_name,
-                "strategy": strategy,
-                **summary,
-            }
-            summary_rows.append(
-                {
-                    **summary_record,
-                    "sstable_count_by_level": json.dumps(
-                        summary_record["sstable_count_by_level"],
-                        ensure_ascii=False,
-                        sort_keys=True,
-                    ),
+                sim = LSMSimulator(config)
+                run_workload(sim, workload)
+
+                metrics_json = sim.export_metrics_json(str(run_dir / "metrics.json"))
+                metrics_csv = sim.export_metrics_csv(str(run_dir / "metrics.csv"))
+                trace_json = sim.export_trace_json(str(run_dir / "trace.json"))
+                trace_csv = sim.export_trace_csv(str(run_dir / "trace.csv"))
+
+                summary = summarize(sim)
+                summary_record = {
+                    "workload": workload_name,
+                    "profile": profile_name,
+                    "strategy": strategy,
+                    "operation_count": len(workload),
+                    **summary,
                 }
-            )
-            summary_json.append(
-                {
-                    **summary_record,
-                    "artifacts": {
-                        "metrics_json": metrics_json,
-                        "metrics_csv": metrics_csv,
-                        "trace_json": trace_json,
-                        "trace_csv": trace_csv,
-                    },
-                }
-            )
+                summary_rows.append(
+                    {
+                        **summary_record,
+                        "sstable_count_by_level": json.dumps(
+                            summary_record["sstable_count_by_level"],
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        ),
+                    }
+                )
+                summary_json.append(
+                    {
+                        **summary_record,
+                        "workload_description": workload_description,
+                        "profile_config": profile_config,
+                        "artifacts": {
+                            "config_json": str(run_dir / "config.json"),
+                            "metrics_json": metrics_json,
+                            "metrics_csv": metrics_csv,
+                            "trace_json": trace_json,
+                            "trace_csv": trace_csv,
+                        },
+                    }
+                )
 
     (out_dir / "summary.json").write_text(
         json.dumps(summary_json, ensure_ascii=False, indent=2),
