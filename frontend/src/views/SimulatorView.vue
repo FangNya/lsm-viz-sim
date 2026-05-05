@@ -60,8 +60,19 @@ const metrics = reactive<MetricsSnapshot>({
   compaction_count: 0,
   read_amplification: 0,
   write_amplification: 0,
-  simulated_io_reads: 0,
-  simulated_io_writes: 0
+  logical_write_bytes_total: 0,
+  wal_write_bytes_total: 0,
+  flush_data_write_bytes_total: 0,
+  flush_meta_write_bytes_total: 0,
+  flush_bloom_write_bytes_total: 0,
+  compaction_data_write_bytes_total: 0,
+  compaction_meta_write_bytes_total: 0,
+  compaction_bloom_write_bytes_total: 0,
+  actual_disk_write_bytes_total: 0,
+  user_query_read_io_total: 0,
+  bloom_read_io_total: 0,
+  index_read_io_total: 0,
+  data_block_read_io_total: 0
 });
 const metricsHistory = ref<MetricsSnapshot[]>([]);
 const error = ref("");

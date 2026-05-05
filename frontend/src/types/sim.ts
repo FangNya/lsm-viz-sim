@@ -46,8 +46,19 @@ export interface MetricsSnapshot {
   compaction_count: number;
   read_amplification: number;
   write_amplification: number;
-  simulated_io_reads: number;
-  simulated_io_writes: number;
+  logical_write_bytes_total: number;
+  wal_write_bytes_total: number;
+  flush_data_write_bytes_total: number;
+  flush_meta_write_bytes_total: number;
+  flush_bloom_write_bytes_total: number;
+  compaction_data_write_bytes_total: number;
+  compaction_meta_write_bytes_total: number;
+  compaction_bloom_write_bytes_total: number;
+  actual_disk_write_bytes_total: number;
+  user_query_read_io_total: number;
+  bloom_read_io_total: number;
+  index_read_io_total: number;
+  data_block_read_io_total: number;
 }
 
 export interface TraceEvent {

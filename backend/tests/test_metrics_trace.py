@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 import sys
 
+import pytest
+
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from app.core import LSMSimulator
@@ -67,6 +69,9 @@ def test_metrics_accumulate_correctly(tmp_path: Path) -> None:
     assert snapshot.compaction_count >= 1
     assert snapshot.memtable_size_records == 0
     assert isinstance(snapshot.sstable_count_by_level, dict)
+    assert snapshot.logical_write_bytes_total == 4
+    assert snapshot.wal_write_bytes_total > 0
+    assert snapshot.actual_disk_write_bytes_total >= snapshot.wal_write_bytes_total
 
 
 def test_export_json_readable(tmp_path: Path) -> None:
@@ -104,7 +109,11 @@ def test_export_csv_headers_stable(tmp_path: Path) -> None:
     assert header == (
         "timestamp,reason,total_puts,total_gets,memtable_size_records,memtable_size_bytes,"
         "sstable_count_by_level,flush_count,compaction_count,read_amplification,"
-        "write_amplification,simulated_io_reads,simulated_io_writes"
+        "write_amplification,logical_write_bytes_total,wal_write_bytes_total,"
+        "flush_data_write_bytes_total,flush_meta_write_bytes_total,flush_bloom_write_bytes_total,"
+        "compaction_data_write_bytes_total,compaction_meta_write_bytes_total,"
+        "compaction_bloom_write_bytes_total,actual_disk_write_bytes_total,"
+        "user_query_read_io_total,bloom_read_io_total,index_read_io_total,data_block_read_io_total"
     )
     assert trace_header == "event_id,event_type,timestamp,seq,payload_json"
 
@@ -126,8 +135,34 @@ def test_amplification_formula_matches_documented_logic(tmp_path: Path) -> None:
     sim.get("missing")
 
     s = sim.metrics.snapshot
-    expected_ra = s.simulated_io_reads / s.total_gets if s.total_gets > 0 else 0.0
-    expected_wa = s.simulated_io_writes / s.total_puts if s.total_puts > 0 else 0.0
+    expected_ra = s.user_query_read_io_total / s.total_gets if s.total_gets > 0 else 0.0
+    expected_wa = (
+        s.actual_disk_write_bytes_total / s.logical_write_bytes_total
+        if s.logical_write_bytes_total > 0
+        else 0.0
+    )
 
-    assert s.read_amplification == expected_ra
-    assert s.write_amplification == expected_wa
+    assert s.read_amplification == pytest.approx(expected_ra)
+    assert s.write_amplification == pytest.approx(expected_wa)
+
+
+def test_compaction_does_not_increase_query_read_metrics_before_get(tmp_path: Path) -> None:
+    sim = LSMSimulator(
+        LSMConfig(
+            wal_dir=str(tmp_path / "wal"),
+            data_dir=str(tmp_path / "data"),
+            stc_trigger_tables=2,
+        )
+    )
+
+    sim.put("k1", "v1")
+    sim.flush_memtable()
+    sim.put("k2", "v2")
+    sim.flush_memtable()
+
+    s = sim.metrics.snapshot
+
+    assert s.compaction_count >= 1
+    assert s.total_gets == 0
+    assert s.user_query_read_io_total == 0
+    assert s.read_amplification == 0.0

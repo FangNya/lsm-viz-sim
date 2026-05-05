@@ -115,3 +115,52 @@ def test_bloom_filter_persisted_and_loadable(tmp_path: Path) -> None:
     assert "bit_array_base64" in bloom_payload
     assert bloom is not None
     assert bloom.might_contain("alpha") is True
+
+
+def test_get_read_io_breakdown_for_bloom_miss(tmp_path: Path) -> None:
+    config = LSMConfig(
+        wal_dir=str(tmp_path / "wal"),
+        data_dir=str(tmp_path / "data"),
+        bloom_bits_per_key=16,
+    )
+    simulator = LSMSimulator(config=config)
+
+    simulator.put("present", "value")
+    meta = simulator.flush_memtable()
+    result = simulator.get("missing")
+
+    assert meta is not None
+    bloom_pages = simulator.sstable.bloom_pages(meta)
+    s = simulator.metrics.snapshot
+    sstable_steps = [step for step in result.path if step.get("step") == "sstable"]
+
+    assert s.user_query_read_io_total == bloom_pages
+    assert s.bloom_read_io_total == bloom_pages
+    assert s.index_read_io_total == 0
+    assert s.data_block_read_io_total == 0
+    assert sstable_steps[0]["query_io"] == bloom_pages
+
+
+def test_get_read_io_breakdown_for_sstable_hit(tmp_path: Path) -> None:
+    config = LSMConfig(
+        wal_dir=str(tmp_path / "wal"),
+        data_dir=str(tmp_path / "data"),
+        bloom_bits_per_key=16,
+    )
+    simulator = LSMSimulator(config=config)
+
+    simulator.put("present", "value")
+    meta = simulator.flush_memtable()
+    result = simulator.get("present")
+
+    assert meta is not None
+    bloom_pages = simulator.sstable.bloom_pages(meta)
+    s = simulator.metrics.snapshot
+    sstable_steps = [step for step in result.path if step.get("step") == "sstable"]
+
+    assert result.found is True
+    assert s.user_query_read_io_total == bloom_pages + 2
+    assert s.bloom_read_io_total == bloom_pages
+    assert s.index_read_io_total == 1
+    assert s.data_block_read_io_total == 1
+    assert sstable_steps[0]["query_io"] == bloom_pages + 2
