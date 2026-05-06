@@ -19,16 +19,15 @@ from app.schemas import LSMConfig
 WORKLOADS_DIR = ROOT / "experiments" / "workloads"
 PROFILES_PATH = ROOT / "experiments" / "config_profiles.json"
 DEFAULT_WORKLOADS = [
-    "write_heavy",
-    "mixed_read_write",
-    "write_heavy_long",
-    "overwrite_hotspot",
-    "range_overlap_stress",
+    "final_sequential_ingest",
+    "final_hotspot_overwrite",
+    "final_overlap_waves",
+    "final_mixed_read_validation",
 ]
 DEFAULT_PROFILES = [
-    "baseline",
-    "aggressive_compaction",
-    "overlap_pressure",
+    "final_balanced",
+    "final_dense_compaction",
+    "final_overlap_sensitive",
 ]
 
 
@@ -49,32 +48,85 @@ def load_profiles(path: Path) -> dict[str, dict[str, Any]]:
     return {str(name): dict(config) for name, config in payload.items()}
 
 
-def run_workload(sim: LSMSimulator, workload: list[dict[str, Any]]) -> None:
+def run_workload(sim: LSMSimulator, workload: list[dict[str, Any]]) -> dict[str, Any]:
+    oracle: dict[str, str] = {}
+    put_count = 0
+    get_count = 0
+    correct_gets = 0
+    mismatches: list[dict[str, Any]] = []
+
     for item in workload:
         op = item.get("op")
         if op == "put":
             result = sim.put(str(item["key"]), str(item["value"]))
+            oracle[str(item["key"])] = str(item["value"])
+            put_count += 1
             if result.needs_flush:
                 sim.flush_memtable()
         elif op == "get":
-            sim.get(str(item["key"]))
+            key = str(item["key"])
+            expected_value = oracle.get(key)
+            expected_found = expected_value is not None
+            result = sim.get(key)
+            get_count += 1
+
+            if result.found == expected_found and result.value == expected_value:
+                correct_gets += 1
+            else:
+                mismatches.append(
+                    {
+                        "key": key,
+                        "expected_found": expected_found,
+                        "expected_value": expected_value,
+                        "actual_found": result.found,
+                        "actual_value": result.value,
+                        "source": result.source,
+                        "level": result.level,
+                        "table_id": result.table_id,
+                    }
+                )
         else:
             raise ValueError(f"unsupported op: {op}")
 
     if sim.memtable.size_records > 0:
         sim.flush_memtable()
 
+    return {
+        "put_count": put_count,
+        "get_count": get_count,
+        "correct_gets": correct_gets,
+        "mismatch_count": len(mismatches),
+        "validation_accuracy": (correct_gets / get_count) if get_count > 0 else 0.0,
+        "mismatches": mismatches[:20],
+        "final_oracle_key_count": len(oracle),
+    }
 
-def summarize(sim: LSMSimulator) -> dict[str, Any]:
+
+def summarize(sim: LSMSimulator, validation: dict[str, Any]) -> dict[str, Any]:
     levels = sim.list_levels()
     counts = {level: len(tables) for level, tables in levels.items()}
     snapshot = sim.metrics.snapshot
+    non_empty_levels = [
+        int(level_name.split("_")[-1])
+        for level_name, tables in levels.items()
+        if tables
+    ]
     return {
+        "put_count": validation["put_count"],
+        "get_count": validation["get_count"],
+        "correct_gets": validation["correct_gets"],
+        "mismatch_count": validation["mismatch_count"],
+        "validation_accuracy": validation["validation_accuracy"],
+        "final_oracle_key_count": validation["final_oracle_key_count"],
         "flush_count": snapshot.flush_count,
         "compaction_count": snapshot.compaction_count,
         "sstable_count_by_level": counts,
+        "max_level_with_data": max(non_empty_levels) if non_empty_levels else -1,
         "read_amplification": snapshot.read_amplification,
         "write_amplification": snapshot.write_amplification,
+        "logical_write_bytes_total": snapshot.logical_write_bytes_total,
+        "actual_disk_write_bytes_total": snapshot.actual_disk_write_bytes_total,
+        "user_query_read_io_total": snapshot.user_query_read_io_total,
     }
 
 
@@ -84,11 +136,21 @@ def export_summary_csv(rows: list[dict[str, Any]], path: Path) -> None:
         "profile",
         "strategy",
         "operation_count",
+        "put_count",
+        "get_count",
+        "correct_gets",
+        "mismatch_count",
+        "validation_accuracy",
+        "final_oracle_key_count",
         "flush_count",
         "compaction_count",
         "sstable_count_by_level",
+        "max_level_with_data",
         "read_amplification",
         "write_amplification",
+        "logical_write_bytes_total",
+        "actual_disk_write_bytes_total",
+        "user_query_read_io_total",
     ]
     with path.open("w", newline="", encoding="utf-8") as file_obj:
         writer = csv.DictWriter(file_obj, fieldnames=headers)
@@ -151,14 +213,19 @@ def main() -> None:
                 )
 
                 sim = LSMSimulator(config)
-                run_workload(sim, workload)
+                validation = run_workload(sim, workload)
 
                 metrics_json = sim.export_metrics_json(str(run_dir / "metrics.json"))
                 metrics_csv = sim.export_metrics_csv(str(run_dir / "metrics.csv"))
                 trace_json = sim.export_trace_json(str(run_dir / "trace.json"))
                 trace_csv = sim.export_trace_csv(str(run_dir / "trace.csv"))
+                validation_json_path = run_dir / "validation.json"
+                validation_json_path.write_text(
+                    json.dumps(validation, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
 
-                summary = summarize(sim)
+                summary = summarize(sim, validation)
                 summary_record = {
                     "workload": workload_name,
                     "profile": profile_name,
@@ -187,7 +254,9 @@ def main() -> None:
                             "metrics_csv": metrics_csv,
                             "trace_json": trace_json,
                             "trace_csv": trace_csv,
+                            "validation_json": str(validation_json_path),
                         },
+                        "validation": validation,
                     }
                 )
 

@@ -237,8 +237,7 @@ class LSMSimulator:
         path.append({"step": "memtable", "result": "miss"})
 
         for level in range(self.config.max_levels):
-            tables = self.level_tables.get(level, [])
-            ordered_tables = list(reversed(tables))
+            ordered_tables = self._candidate_tables_for_get(level, key, path)
 
             level_hit = False
             for meta in ordered_tables:
@@ -358,3 +357,33 @@ class LSMSimulator:
             if table.table_id == table_id:
                 return table
         return None
+
+    def _candidate_tables_for_get(
+        self,
+        level: int,
+        key: str,
+        path: list[dict[str, Any]],
+    ) -> list[SSTableMeta]:
+        tables = self.level_tables.get(level, [])
+        if not self._should_use_lcs_level_lookup(level):
+            return list(reversed(tables))
+
+        candidates = self.compaction_strategy.find_candidate_tables(self, level, key)
+        path.append(
+            {
+                "step": "level_lookup",
+                "level": level,
+                "strategy": "lcs",
+                "mode": "binary_range_lookup",
+                "candidate_table_ids": [meta.table_id for meta in candidates],
+                "pruned_table_count": max(len(tables) - len(candidates), 0),
+            }
+        )
+        return list(reversed(candidates))
+
+    def _should_use_lcs_level_lookup(self, level: int) -> bool:
+        return (
+            self.config.compaction_strategy == CompactionStrategy.LCS.value
+            and isinstance(self.compaction_strategy, LCSCompactionStrategy)
+            and level >= 1
+        )

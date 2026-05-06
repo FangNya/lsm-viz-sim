@@ -1,0 +1,3205 @@
+{
+  "description": "36 overwrite cycles over a fixed hot set plus cold append-only keys. This workload validates latest-value correctness under repeated overwrite and highlights STC/LCS differences on duplicate-heavy data.",
+  "operations": [
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_01_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_01_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_01_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_01_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_01_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_01_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_01_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_01_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_01_01",
+      "value": "cycle_01_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_01_02",
+      "value": "cycle_01_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_01_03",
+      "value": "cycle_01_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_01_04",
+      "value": "cycle_01_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_01_05",
+      "value": "cycle_01_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_01_06",
+      "value": "cycle_01_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_01_07",
+      "value": "cycle_01_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_01_08",
+      "value": "cycle_01_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_02_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_02_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_02_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_02_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_02_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_02_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_02_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_02_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_02_01",
+      "value": "cycle_02_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_02_02",
+      "value": "cycle_02_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_02_03",
+      "value": "cycle_02_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_02_04",
+      "value": "cycle_02_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_02_05",
+      "value": "cycle_02_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_02_06",
+      "value": "cycle_02_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_02_07",
+      "value": "cycle_02_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_02_08",
+      "value": "cycle_02_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_03_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_03_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_03_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_03_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_03_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_03_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_03_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_03_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_03_01",
+      "value": "cycle_03_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_03_02",
+      "value": "cycle_03_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_03_03",
+      "value": "cycle_03_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_03_04",
+      "value": "cycle_03_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_03_05",
+      "value": "cycle_03_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_03_06",
+      "value": "cycle_03_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_03_07",
+      "value": "cycle_03_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_03_08",
+      "value": "cycle_03_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_03_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_01_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_04_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_04_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_04_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_04_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_04_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_04_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_04_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_04_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_04_01",
+      "value": "cycle_04_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_04_02",
+      "value": "cycle_04_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_04_03",
+      "value": "cycle_04_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_04_04",
+      "value": "cycle_04_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_04_05",
+      "value": "cycle_04_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_04_06",
+      "value": "cycle_04_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_04_07",
+      "value": "cycle_04_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_04_08",
+      "value": "cycle_04_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_05_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_05_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_05_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_05_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_05_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_05_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_05_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_05_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_05_01",
+      "value": "cycle_05_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_05_02",
+      "value": "cycle_05_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_05_03",
+      "value": "cycle_05_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_05_04",
+      "value": "cycle_05_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_05_05",
+      "value": "cycle_05_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_05_06",
+      "value": "cycle_05_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_05_07",
+      "value": "cycle_05_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_05_08",
+      "value": "cycle_05_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_06_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_06_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_06_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_06_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_06_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_06_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_06_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_06_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_06_01",
+      "value": "cycle_06_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_06_02",
+      "value": "cycle_06_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_06_03",
+      "value": "cycle_06_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_06_04",
+      "value": "cycle_06_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_06_05",
+      "value": "cycle_06_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_06_06",
+      "value": "cycle_06_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_06_07",
+      "value": "cycle_06_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_06_08",
+      "value": "cycle_06_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_06_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_04_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_07_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_07_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_07_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_07_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_07_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_07_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_07_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_07_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_07_01",
+      "value": "cycle_07_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_07_02",
+      "value": "cycle_07_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_07_03",
+      "value": "cycle_07_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_07_04",
+      "value": "cycle_07_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_07_05",
+      "value": "cycle_07_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_07_06",
+      "value": "cycle_07_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_07_07",
+      "value": "cycle_07_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_07_08",
+      "value": "cycle_07_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_08_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_08_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_08_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_08_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_08_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_08_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_08_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_08_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_08_01",
+      "value": "cycle_08_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_08_02",
+      "value": "cycle_08_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_08_03",
+      "value": "cycle_08_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_08_04",
+      "value": "cycle_08_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_08_05",
+      "value": "cycle_08_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_08_06",
+      "value": "cycle_08_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_08_07",
+      "value": "cycle_08_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_08_08",
+      "value": "cycle_08_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_09_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_09_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_09_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_09_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_09_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_09_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_09_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_09_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_09_01",
+      "value": "cycle_09_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_09_02",
+      "value": "cycle_09_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_09_03",
+      "value": "cycle_09_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_09_04",
+      "value": "cycle_09_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_09_05",
+      "value": "cycle_09_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_09_06",
+      "value": "cycle_09_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_09_07",
+      "value": "cycle_09_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_09_08",
+      "value": "cycle_09_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_09_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_07_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_09"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_10_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_10_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_10_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_10_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_10_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_10_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_10_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_10_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_10_01",
+      "value": "cycle_10_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_10_02",
+      "value": "cycle_10_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_10_03",
+      "value": "cycle_10_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_10_04",
+      "value": "cycle_10_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_10_05",
+      "value": "cycle_10_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_10_06",
+      "value": "cycle_10_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_10_07",
+      "value": "cycle_10_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_10_08",
+      "value": "cycle_10_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_11_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_11_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_11_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_11_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_11_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_11_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_11_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_11_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_11_01",
+      "value": "cycle_11_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_11_02",
+      "value": "cycle_11_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_11_03",
+      "value": "cycle_11_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_11_04",
+      "value": "cycle_11_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_11_05",
+      "value": "cycle_11_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_11_06",
+      "value": "cycle_11_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_11_07",
+      "value": "cycle_11_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_11_08",
+      "value": "cycle_11_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_12_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_12_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_12_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_12_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_12_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_12_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_12_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_12_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_12_01",
+      "value": "cycle_12_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_12_02",
+      "value": "cycle_12_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_12_03",
+      "value": "cycle_12_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_12_04",
+      "value": "cycle_12_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_12_05",
+      "value": "cycle_12_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_12_06",
+      "value": "cycle_12_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_12_07",
+      "value": "cycle_12_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_12_08",
+      "value": "cycle_12_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_12_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_10_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_12"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_13_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_13_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_13_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_13_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_13_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_13_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_13_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_13_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_13_01",
+      "value": "cycle_13_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_13_02",
+      "value": "cycle_13_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_13_03",
+      "value": "cycle_13_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_13_04",
+      "value": "cycle_13_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_13_05",
+      "value": "cycle_13_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_13_06",
+      "value": "cycle_13_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_13_07",
+      "value": "cycle_13_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_13_08",
+      "value": "cycle_13_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_14_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_14_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_14_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_14_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_14_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_14_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_14_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_14_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_14_01",
+      "value": "cycle_14_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_14_02",
+      "value": "cycle_14_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_14_03",
+      "value": "cycle_14_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_14_04",
+      "value": "cycle_14_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_14_05",
+      "value": "cycle_14_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_14_06",
+      "value": "cycle_14_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_14_07",
+      "value": "cycle_14_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_14_08",
+      "value": "cycle_14_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_15_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_15_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_15_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_15_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_15_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_15_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_15_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_15_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_15_01",
+      "value": "cycle_15_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_15_02",
+      "value": "cycle_15_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_15_03",
+      "value": "cycle_15_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_15_04",
+      "value": "cycle_15_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_15_05",
+      "value": "cycle_15_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_15_06",
+      "value": "cycle_15_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_15_07",
+      "value": "cycle_15_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_15_08",
+      "value": "cycle_15_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_15_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_13_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_15"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_16_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_16_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_16_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_16_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_16_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_16_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_16_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_16_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_16_01",
+      "value": "cycle_16_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_16_02",
+      "value": "cycle_16_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_16_03",
+      "value": "cycle_16_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_16_04",
+      "value": "cycle_16_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_16_05",
+      "value": "cycle_16_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_16_06",
+      "value": "cycle_16_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_16_07",
+      "value": "cycle_16_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_16_08",
+      "value": "cycle_16_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_17_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_17_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_17_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_17_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_17_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_17_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_17_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_17_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_17_01",
+      "value": "cycle_17_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_17_02",
+      "value": "cycle_17_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_17_03",
+      "value": "cycle_17_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_17_04",
+      "value": "cycle_17_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_17_05",
+      "value": "cycle_17_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_17_06",
+      "value": "cycle_17_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_17_07",
+      "value": "cycle_17_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_17_08",
+      "value": "cycle_17_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_18_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_18_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_18_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_18_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_18_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_18_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_18_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_18_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_18_01",
+      "value": "cycle_18_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_18_02",
+      "value": "cycle_18_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_18_03",
+      "value": "cycle_18_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_18_04",
+      "value": "cycle_18_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_18_05",
+      "value": "cycle_18_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_18_06",
+      "value": "cycle_18_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_18_07",
+      "value": "cycle_18_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_18_08",
+      "value": "cycle_18_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_18_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_16_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_18"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_19_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_19_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_19_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_19_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_19_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_19_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_19_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_19_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_19_01",
+      "value": "cycle_19_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_19_02",
+      "value": "cycle_19_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_19_03",
+      "value": "cycle_19_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_19_04",
+      "value": "cycle_19_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_19_05",
+      "value": "cycle_19_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_19_06",
+      "value": "cycle_19_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_19_07",
+      "value": "cycle_19_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_19_08",
+      "value": "cycle_19_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_20_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_20_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_20_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_20_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_20_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_20_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_20_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_20_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_20_01",
+      "value": "cycle_20_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_20_02",
+      "value": "cycle_20_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_20_03",
+      "value": "cycle_20_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_20_04",
+      "value": "cycle_20_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_20_05",
+      "value": "cycle_20_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_20_06",
+      "value": "cycle_20_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_20_07",
+      "value": "cycle_20_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_20_08",
+      "value": "cycle_20_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_21_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_21_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_21_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_21_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_21_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_21_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_21_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_21_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_21_01",
+      "value": "cycle_21_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_21_02",
+      "value": "cycle_21_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_21_03",
+      "value": "cycle_21_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_21_04",
+      "value": "cycle_21_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_21_05",
+      "value": "cycle_21_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_21_06",
+      "value": "cycle_21_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_21_07",
+      "value": "cycle_21_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_21_08",
+      "value": "cycle_21_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_21_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_19_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_21"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_22_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_22_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_22_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_22_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_22_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_22_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_22_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_22_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_22_01",
+      "value": "cycle_22_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_22_02",
+      "value": "cycle_22_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_22_03",
+      "value": "cycle_22_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_22_04",
+      "value": "cycle_22_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_22_05",
+      "value": "cycle_22_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_22_06",
+      "value": "cycle_22_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_22_07",
+      "value": "cycle_22_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_22_08",
+      "value": "cycle_22_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_23_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_23_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_23_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_23_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_23_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_23_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_23_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_23_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_23_01",
+      "value": "cycle_23_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_23_02",
+      "value": "cycle_23_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_23_03",
+      "value": "cycle_23_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_23_04",
+      "value": "cycle_23_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_23_05",
+      "value": "cycle_23_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_23_06",
+      "value": "cycle_23_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_23_07",
+      "value": "cycle_23_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_23_08",
+      "value": "cycle_23_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_24_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_24_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_24_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_24_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_24_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_24_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_24_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_24_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_24_01",
+      "value": "cycle_24_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_24_02",
+      "value": "cycle_24_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_24_03",
+      "value": "cycle_24_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_24_04",
+      "value": "cycle_24_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_24_05",
+      "value": "cycle_24_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_24_06",
+      "value": "cycle_24_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_24_07",
+      "value": "cycle_24_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_24_08",
+      "value": "cycle_24_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_24_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_22_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_24"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_25_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_25_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_25_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_25_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_25_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_25_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_25_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_25_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_25_01",
+      "value": "cycle_25_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_25_02",
+      "value": "cycle_25_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_25_03",
+      "value": "cycle_25_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_25_04",
+      "value": "cycle_25_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_25_05",
+      "value": "cycle_25_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_25_06",
+      "value": "cycle_25_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_25_07",
+      "value": "cycle_25_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_25_08",
+      "value": "cycle_25_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_26_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_26_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_26_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_26_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_26_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_26_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_26_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_26_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_26_01",
+      "value": "cycle_26_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_26_02",
+      "value": "cycle_26_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_26_03",
+      "value": "cycle_26_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_26_04",
+      "value": "cycle_26_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_26_05",
+      "value": "cycle_26_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_26_06",
+      "value": "cycle_26_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_26_07",
+      "value": "cycle_26_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_26_08",
+      "value": "cycle_26_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_27_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_27_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_27_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_27_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_27_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_27_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_27_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_27_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_27_01",
+      "value": "cycle_27_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_27_02",
+      "value": "cycle_27_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_27_03",
+      "value": "cycle_27_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_27_04",
+      "value": "cycle_27_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_27_05",
+      "value": "cycle_27_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_27_06",
+      "value": "cycle_27_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_27_07",
+      "value": "cycle_27_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_27_08",
+      "value": "cycle_27_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_27_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_25_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_27"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_28_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_28_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_28_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_28_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_28_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_28_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_28_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_28_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_28_01",
+      "value": "cycle_28_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_28_02",
+      "value": "cycle_28_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_28_03",
+      "value": "cycle_28_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_28_04",
+      "value": "cycle_28_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_28_05",
+      "value": "cycle_28_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_28_06",
+      "value": "cycle_28_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_28_07",
+      "value": "cycle_28_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_28_08",
+      "value": "cycle_28_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_29_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_29_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_29_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_29_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_29_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_29_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_29_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_29_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_29_01",
+      "value": "cycle_29_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_29_02",
+      "value": "cycle_29_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_29_03",
+      "value": "cycle_29_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_29_04",
+      "value": "cycle_29_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_29_05",
+      "value": "cycle_29_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_29_06",
+      "value": "cycle_29_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_29_07",
+      "value": "cycle_29_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_29_08",
+      "value": "cycle_29_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_30_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_30_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_30_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_30_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_30_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_30_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_30_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_30_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_30_01",
+      "value": "cycle_30_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_30_02",
+      "value": "cycle_30_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_30_03",
+      "value": "cycle_30_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_30_04",
+      "value": "cycle_30_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_30_05",
+      "value": "cycle_30_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_30_06",
+      "value": "cycle_30_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_30_07",
+      "value": "cycle_30_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_30_08",
+      "value": "cycle_30_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_30_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_28_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_30"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_31_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_31_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_31_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_31_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_31_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_31_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_31_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_31_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_31_01",
+      "value": "cycle_31_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_31_02",
+      "value": "cycle_31_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_31_03",
+      "value": "cycle_31_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_31_04",
+      "value": "cycle_31_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_31_05",
+      "value": "cycle_31_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_31_06",
+      "value": "cycle_31_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_31_07",
+      "value": "cycle_31_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_31_08",
+      "value": "cycle_31_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_32_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_32_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_32_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_32_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_32_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_32_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_32_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_32_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_32_01",
+      "value": "cycle_32_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_32_02",
+      "value": "cycle_32_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_32_03",
+      "value": "cycle_32_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_32_04",
+      "value": "cycle_32_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_32_05",
+      "value": "cycle_32_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_32_06",
+      "value": "cycle_32_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_32_07",
+      "value": "cycle_32_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_32_08",
+      "value": "cycle_32_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_33_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_33_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_33_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_33_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_33_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_33_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_33_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_33_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_33_01",
+      "value": "cycle_33_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_33_02",
+      "value": "cycle_33_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_33_03",
+      "value": "cycle_33_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_33_04",
+      "value": "cycle_33_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_33_05",
+      "value": "cycle_33_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_33_06",
+      "value": "cycle_33_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_33_07",
+      "value": "cycle_33_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_33_08",
+      "value": "cycle_33_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_33_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_31_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_33"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_34_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_34_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_34_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_34_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_34_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_34_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_34_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_34_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_34_01",
+      "value": "cycle_34_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_34_02",
+      "value": "cycle_34_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_34_03",
+      "value": "cycle_34_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_34_04",
+      "value": "cycle_34_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_34_05",
+      "value": "cycle_34_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_34_06",
+      "value": "cycle_34_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_34_07",
+      "value": "cycle_34_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_34_08",
+      "value": "cycle_34_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_35_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_35_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_35_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_35_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_35_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_35_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_35_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_35_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_35_01",
+      "value": "cycle_35_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_35_02",
+      "value": "cycle_35_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_35_03",
+      "value": "cycle_35_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_35_04",
+      "value": "cycle_35_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_35_05",
+      "value": "cycle_35_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_35_06",
+      "value": "cycle_35_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_35_07",
+      "value": "cycle_35_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_35_08",
+      "value": "cycle_35_cold_08"
+    },
+    {
+      "op": "put",
+      "key": "hot_01",
+      "value": "cycle_36_hot_01"
+    },
+    {
+      "op": "put",
+      "key": "hot_02",
+      "value": "cycle_36_hot_02"
+    },
+    {
+      "op": "put",
+      "key": "hot_03",
+      "value": "cycle_36_hot_03"
+    },
+    {
+      "op": "put",
+      "key": "hot_04",
+      "value": "cycle_36_hot_04"
+    },
+    {
+      "op": "put",
+      "key": "hot_05",
+      "value": "cycle_36_hot_05"
+    },
+    {
+      "op": "put",
+      "key": "hot_06",
+      "value": "cycle_36_hot_06"
+    },
+    {
+      "op": "put",
+      "key": "hot_07",
+      "value": "cycle_36_hot_07"
+    },
+    {
+      "op": "put",
+      "key": "hot_08",
+      "value": "cycle_36_hot_08"
+    },
+    {
+      "op": "put",
+      "key": "cold_36_01",
+      "value": "cycle_36_cold_01"
+    },
+    {
+      "op": "put",
+      "key": "cold_36_02",
+      "value": "cycle_36_cold_02"
+    },
+    {
+      "op": "put",
+      "key": "cold_36_03",
+      "value": "cycle_36_cold_03"
+    },
+    {
+      "op": "put",
+      "key": "cold_36_04",
+      "value": "cycle_36_cold_04"
+    },
+    {
+      "op": "put",
+      "key": "cold_36_05",
+      "value": "cycle_36_cold_05"
+    },
+    {
+      "op": "put",
+      "key": "cold_36_06",
+      "value": "cycle_36_cold_06"
+    },
+    {
+      "op": "put",
+      "key": "cold_36_07",
+      "value": "cycle_36_cold_07"
+    },
+    {
+      "op": "put",
+      "key": "cold_36_08",
+      "value": "cycle_36_cold_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_36_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_34_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_36"
+    },
+    {
+      "op": "get",
+      "key": "hot_01"
+    },
+    {
+      "op": "get",
+      "key": "hot_02"
+    },
+    {
+      "op": "get",
+      "key": "hot_04"
+    },
+    {
+      "op": "get",
+      "key": "hot_08"
+    },
+    {
+      "op": "get",
+      "key": "cold_01_01"
+    },
+    {
+      "op": "get",
+      "key": "cold_18_04"
+    },
+    {
+      "op": "get",
+      "key": "cold_36_08"
+    },
+    {
+      "op": "get",
+      "key": "hot_missing_final"
+    }
+  ]
+}
