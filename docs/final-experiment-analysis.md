@@ -249,7 +249,35 @@
 
 1. 当前写放大按“实际落盘总字节 / 逻辑写入字节”计算。
 2. 该 workload 近乎纯顺序写，重复 key 很少，写放大主要由“数据被整体重写多少轮”决定。
-3. 在 `final_balanced` 配置下，STC 把 run 更积极地向深层推进，导致相同数据被更多次重写。
+3. 在 `final_balanced` 配置下，STC 把 run 更积极地向深层推进，导致相同数据被更多次重写。STC每层容量相当于*4，LCS每层容量*6，导致STC层会更深
+我改过配置后：
+memtable_max_records=24
+memtable_max_bytes=4096
+max_levels=6
+stc_trigger_tables=4
+l0_compaction_trigger_tables=4
+level_size_multiplier=4.0
+bloom_bits_per_key=12
+
+测试 workload：
+
+final_sequential_ingest
+实验结果：
+
+STC
+flush_count = 32
+compaction_count = 10
+read_amplification = 3.070
+write_amplification = 27.949
+level state = L2=2
+LCS
+flush_count = 32
+compaction_count = 12
+read_amplification = 2.298
+write_amplification = 24.802
+level state = L1=4, L2=4
+结果仍然是STC写放大更大。
+当前实现里，STC 写放大更大的根本原因，不只是“LCS 层容量更大”，而是“STC 的同步整批下推 + 顺序写无去重收益 + 写放大按总落盘字节统计”这三件事叠加在一起。
 4. 当前 LCS 虽然保留了更多有序高层表，但减少了进一步下推重写，因此总落盘字节更低。
 
 这个结论应写成：**当前模拟器中，顺序写场景下的 LCS 在读放大和写放大上都可能优于 STC；这是当前简化语义的实验现象，不宜直接外推为工业级 LCS 的通用规律。**
