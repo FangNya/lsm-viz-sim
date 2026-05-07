@@ -127,7 +127,7 @@
 - 识别哪些指标名称容易误导论文读者
 
 当前问题：
-
+（已经完成）
 - `read_amplification` 混入了 compaction 输入读
 - `write_amplification` 是“模拟写次数 / put 数”，不是字节级写放大
 - 指标定义目前适合教学展示，但论文中如果不加解释容易被误读
