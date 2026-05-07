@@ -76,20 +76,56 @@ def test_lcs_higher_level_pushdown_simplified(tmp_path: Path) -> None:
     sim = LSMSimulator(
         LSMConfig(
             compaction_strategy="lcs",
+            memtable_max_records=1,
             l0_compaction_trigger_tables=2,
-            level_size_multiplier=1.01,
+            level_size_multiplier=2.0,
             wal_dir=str(tmp_path / "wal"),
             data_dir=str(tmp_path / "data"),
             max_levels=4,
         )
     )
 
-    # 6 flushes -> 3 L0->L1 compactions (threshold=2), then L1 over limit (2) and pushdown to L2.
+    # Each flush produces a 1-record L0 table. With threshold=2:
+    # - every two L0 tables compact into a 2-record L1 table
+    # - L1 target capacity = 1 * 2 * 2^1 = 4 records
+    # - after the third L0->L1 compaction, L1 total reaches 6 records and must push down to L2
     for i in range(6):
         sim.put(f"k{i}", f"v{i}")
         sim.flush_memtable()
 
     assert any(item.target_level == 2 for item in sim.compaction_history)
+
+
+def test_lcs_l1_triggers_by_total_records_instead_of_table_count(tmp_path: Path) -> None:
+    sim = LSMSimulator(
+        LSMConfig(
+            compaction_strategy="lcs",
+            memtable_max_records=2,
+            l0_compaction_trigger_tables=2,
+            level_size_multiplier=2.0,
+            wal_dir=str(tmp_path / "wal"),
+            data_dir=str(tmp_path / "data"),
+            max_levels=4,
+        )
+    )
+
+    # Nominal capacities under the new teaching semantics:
+    # L0 capacity = 2 * 2 = 4 records
+    # L1 capacity = 4 * 2 = 8 records
+    #
+    # Six flushes of two distinct keys each produce:
+    # - three L0->L1 compactions
+    # - total 12 records entering L1 over time
+    # Once L1 total exceeds 8 records, L1->L2 compaction must trigger.
+    for i in range(12):
+        sim.put(f"k{i:03d}", f"v{i}")
+        if (i + 1) % 2 == 0:
+            sim.flush_memtable()
+
+    assert any(
+        item.strategy == "lcs" and item.source_level == 1 and item.target_level == 2
+        for item in sim.compaction_history
+    )
 
 
 def test_stc_and_lcs_behave_differently_on_same_workload(tmp_path: Path) -> None:

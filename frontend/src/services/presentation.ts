@@ -19,6 +19,13 @@ export interface CanvasFocus {
   chips: string[];
 }
 
+export interface CanvasFrame extends CanvasFocus {
+  eventId: string;
+  seq: number;
+  timestamp: string;
+  eventLabel: string;
+}
+
 const EVENT_LABELS: Record<string, string> = {
   put: "写入",
   flush_start: "开始 Flush",
@@ -189,8 +196,25 @@ export function metricHighlights(metrics: MetricsSnapshot): Array<{ label: strin
   ];
 }
 
+export function buildCanvasFrames(events: TraceEvent[]): CanvasFrame[] {
+  return [...events].reverse().map((event) => {
+    const focus = buildCanvasFocusFromEvent(event);
+    return {
+      ...focus,
+      eventId: event.event_id,
+      seq: event.seq,
+      timestamp: event.timestamp,
+      eventLabel: formatEventLabel(event.event_type)
+    };
+  });
+}
+
 export function buildCanvasFocus(events: TraceEvent[]): CanvasFocus {
   const event = events[0];
+  return buildCanvasFocusFromEvent(event);
+}
+
+function buildCanvasFocusFromEvent(event: TraceEvent | undefined): CanvasFocus {
   if (!event) {
     return {
       title: "等待操作",

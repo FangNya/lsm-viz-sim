@@ -1,20 +1,58 @@
-<template>
+﻿<template>
   <section class="panel">
     <div class="section-head">
       <div>
         <h2>结构演化画布</h2>
-        <p>基于最近一次 trace 事件高亮写入、flush、compaction 与查询路径，帮助演示层级变化。</p>
+        <p>基于最近事件进行高亮，并支持按时间顺序回放，适合小规模 workload 的教学演示。</p>
       </div>
-      <span class="summary">当前焦点：{{ focus.title }}</span>
+      <span class="summary">当前焦点：{{ currentFrame.title }}</span>
     </div>
 
-    <div class="focus-banner" :data-tone="eventTone(focus.eventType)">
+    <div class="control-bar">
+      <div class="player-controls">
+        <button type="button" @click="goPrev" :disabled="frames.length === 0">上一帧</button>
+        <button type="button" class="primary" @click="togglePlayback" :disabled="frames.length <= 1">
+          {{ isPlaying ? "暂停播放" : "自动播放" }}
+        </button>
+        <button type="button" @click="goNext" :disabled="frames.length === 0">下一帧</button>
+      </div>
+
+      <div class="player-controls">
+        <label>
+          <span>播放速度</span>
+          <select v-model.number="playbackMs">
+            <option :value="1400">慢速</option>
+            <option :value="900">标准</option>
+            <option :value="500">快速</option>
+          </select>
+        </label>
+        <button type="button" @click="jumpToLatest" :disabled="frames.length === 0">跳到最新事件</button>
+      </div>
+    </div>
+
+    <div class="progress-panel">
+      <input
+        v-if="frames.length > 0"
+        v-model.number="frameIndex"
+        class="slider"
+        type="range"
+        min="0"
+        :max="frames.length - 1"
+        step="1"
+      />
+      <div class="progress-text">
+        <span>第 {{ frames.length === 0 ? 0 : frameIndex + 1 }} / {{ frames.length }} 帧</span>
+        <span v-if="frames.length > 0">{{ currentFrame.eventLabel }} · seq #{{ currentFrame.seq }}</span>
+      </div>
+    </div>
+
+    <div class="focus-banner" :data-tone="eventTone(currentFrame.eventType)">
       <div>
-        <strong>{{ focus.title }}</strong>
-        <p>{{ focus.description }}</p>
+        <strong>{{ currentFrame.title }}</strong>
+        <p>{{ currentFrame.description }}</p>
       </div>
       <div class="chips">
-        <span v-for="chip in focus.chips" :key="chip" class="chip">{{ chip }}</span>
+        <span v-for="chip in currentFrame.chips" :key="chip" class="chip">{{ chip }}</span>
       </div>
     </div>
 
@@ -64,13 +102,26 @@
         </article>
       </div>
     </div>
+
+    <div v-if="frames.length > 0" class="frame-list">
+      <button
+        v-for="(frame, index) in frames"
+        :key="frame.eventId"
+        type="button"
+        class="frame-chip"
+        :data-active="index === frameIndex"
+        @click="frameIndex = index"
+      >
+        #{{ frame.seq }} {{ frame.eventLabel }}
+      </button>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 
-import { buildCanvasFocus, buildLevelBuckets, eventTone, formatBytes } from "../services/presentation";
+import { buildCanvasFocus, buildCanvasFrames, buildLevelBuckets, eventTone, formatBytes } from "../services/presentation";
 import type { LSMConfig, MetricsSnapshot, SSTableMeta, TraceEvent } from "../types/sim";
 
 const props = defineProps<{
@@ -80,19 +131,111 @@ const props = defineProps<{
   events: TraceEvent[];
 }>();
 
-const focus = computed(() => buildCanvasFocus(props.events));
+const playbackMs = ref(900);
+const frameIndex = ref(0);
+const isPlaying = ref(false);
+let timer: ReturnType<typeof setInterval> | null = null;
+
+const frames = computed(() => buildCanvasFrames(props.events));
+const currentFrame = computed(() => {
+  if (frames.value.length === 0) {
+    return buildCanvasFocus([]);
+  }
+  return frames.value[Math.min(frameIndex.value, frames.value.length - 1)];
+});
 const buckets = computed(() => buildLevelBuckets(props.levels, props.config.max_levels));
 
+watch(
+  frames,
+  (next) => {
+    if (next.length === 0) {
+      frameIndex.value = 0;
+      stopPlayback();
+      return;
+    }
+    frameIndex.value = next.length - 1;
+  },
+  { immediate: true }
+);
+
+watch(playbackMs, () => {
+  if (isPlaying.value) {
+    startPlayback();
+  }
+});
+
+onBeforeUnmount(() => {
+  stopPlayback();
+});
+
+function togglePlayback(): void {
+  if (isPlaying.value) {
+    stopPlayback();
+    return;
+  }
+  startPlayback();
+}
+
+function startPlayback(): void {
+  stopPlayback();
+  if (frames.value.length <= 1) {
+    return;
+  }
+  if (frameIndex.value >= frames.value.length - 1) {
+    frameIndex.value = 0;
+  }
+  isPlaying.value = true;
+  timer = setInterval(() => {
+    if (frameIndex.value >= frames.value.length - 1) {
+      stopPlayback();
+      return;
+    }
+    frameIndex.value += 1;
+  }, playbackMs.value);
+}
+
+function stopPlayback(): void {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+  isPlaying.value = false;
+}
+
+function goPrev(): void {
+  stopPlayback();
+  if (frames.value.length === 0) {
+    return;
+  }
+  frameIndex.value = Math.max(0, frameIndex.value - 1);
+}
+
+function goNext(): void {
+  stopPlayback();
+  if (frames.value.length === 0) {
+    return;
+  }
+  frameIndex.value = Math.min(frames.value.length - 1, frameIndex.value + 1);
+}
+
+function jumpToLatest(): void {
+  stopPlayback();
+  if (frames.value.length === 0) {
+    return;
+  }
+  frameIndex.value = frames.value.length - 1;
+}
+
 function isStageActive(stage: string): boolean {
-  return focus.value.activeStages.includes(stage);
+  return currentFrame.value.activeStages.includes(stage);
 }
 
 function isLevelActive(level: number): boolean {
-  return focus.value.activeLevels.includes(level) || isStageActive(`level_${level}`);
+  return currentFrame.value.activeLevels.includes(level) || isStageActive(`level_${level}`);
 }
 
 function isTableActive(tableId: string): boolean {
-  return focus.value.activeTableIds.includes(tableId);
+  return currentFrame.value.activeTableIds.includes(tableId);
 }
 </script>
 
@@ -118,6 +261,79 @@ function isTableActive(tableId: string): boolean {
   color: #3d4752;
   font-size: 12px;
   font-weight: 600;
+}
+
+.control-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.player-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.player-controls label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #4b5a6f;
+  font-size: 13px;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+button {
+  border: 1px solid #cad3df;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button.primary {
+  background: #1f5fbf;
+  color: #fff;
+  border-color: #1f5fbf;
+}
+
+select {
+  border: 1px solid #cad3df;
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: #fff;
+}
+
+.progress-panel {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.slider {
+  width: 100%;
+}
+
+.progress-text {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #566273;
+  font-size: 13px;
 }
 
 .focus-banner {
@@ -155,19 +371,31 @@ function isTableActive(tableId: string): boolean {
   background: linear-gradient(135deg, #faf7ff, #f1eaff);
 }
 
-.chips {
+.chips,
+.frame-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.chip {
+.chip,
+.frame-chip {
   padding: 5px 10px;
   border-radius: 999px;
   background: rgba(17, 32, 51, 0.08);
   color: #223247;
   font-size: 12px;
   font-weight: 600;
+}
+
+.frame-chip {
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.frame-chip[data-active="true"] {
+  background: #1f5fbf;
+  color: #fff;
 }
 
 .canvas {
@@ -304,6 +532,10 @@ function isTableActive(tableId: string): boolean {
   font-size: 12px;
 }
 
+.frame-list {
+  margin-top: 14px;
+}
+
 @media (max-width: 900px) {
   .stage-strip {
     grid-template-columns: 1fr;
@@ -315,6 +547,12 @@ function isTableActive(tableId: string): boolean {
 
   .flow-arrow[data-active="true"] {
     transform: rotate(90deg) scale(1.08);
+  }
+
+  .progress-text,
+  .control-bar {
+    grid-template-columns: 1fr;
+    display: grid;
   }
 }
 </style>

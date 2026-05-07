@@ -18,8 +18,8 @@ class LCSCompactionStrategy(CompactionStrategyBase):
         if level == 0:
             return len(tables) >= simulator.config.l0_compaction_trigger_tables
 
-        limit = self._level_limit(simulator, level)
-        return len(tables) > limit
+        capacity = self._level_record_capacity(simulator, level)
+        return self._level_record_total(tables) > capacity
 
     def select_inputs(self, simulator: "LSMSimulator", level: int) -> list[SSTableMeta]:
         if level == 0:
@@ -98,9 +98,14 @@ class LCSCompactionStrategy(CompactionStrategyBase):
                 overlaps.append(meta)
         return overlaps
 
-    def _level_limit(self, simulator: "LSMSimulator", level: int) -> int:
-        base = simulator.config.l0_compaction_trigger_tables
-        return max(1, int(base * (simulator.config.level_size_multiplier ** level)))
+    def _level_record_capacity(self, simulator: "LSMSimulator", level: int) -> int:
+        base_run_records = simulator.config.memtable_max_records
+        l0_capacity = base_run_records * simulator.config.l0_compaction_trigger_tables
+        return max(1, int(l0_capacity * (simulator.config.level_size_multiplier ** level)))
+
+    @staticmethod
+    def _level_record_total(tables: list[SSTableMeta]) -> int:
+        return sum(meta.record_count for meta in tables)
 
     def find_candidate_tables(
         self,
