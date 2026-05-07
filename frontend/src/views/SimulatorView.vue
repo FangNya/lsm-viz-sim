@@ -25,6 +25,8 @@
 
     <MetricsSummary :metrics="metrics" />
 
+    <StructureCanvas :config="config" :levels="levels" :metrics="metrics" :events="events" />
+
     <div class="main-grid">
       <LevelView :levels="levels" :metrics="metrics" />
       <EventTimeline :events="events" />
@@ -42,6 +44,7 @@ import EventTimeline from "../components/EventTimeline.vue";
 import LevelView from "../components/LevelView.vue";
 import MetricsCharts from "../components/MetricsCharts.vue";
 import MetricsSummary from "../components/MetricsSummary.vue";
+import StructureCanvas from "../components/StructureCanvas.vue";
 import { totalSstableCount } from "../services/presentation";
 import { simApi } from "../services/api";
 import { createEventsSocket } from "../services/ws";
