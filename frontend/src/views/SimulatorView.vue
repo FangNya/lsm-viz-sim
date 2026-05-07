@@ -1,8 +1,16 @@
-<template>
+﻿<template>
   <div class="page">
-    <header>
-      <h1>LSM-Tree Simulator</h1>
-      <p>中期最小可演示页面（功能优先，样式从简）</p>
+    <header class="hero">
+      <div>
+        <h1>LSM-Tree Simulator</h1>
+        <p>面向教学与答辩演示的 LSM-Tree 可视化模拟系统。</p>
+        <p class="subline">当前页面聚焦结构演化、关键事件和读写代价，不追求工业级数据库界面复杂度。</p>
+      </div>
+      <div class="status-group">
+        <span class="status-badge" :data-ok="!error">REST {{ error ? "异常" : "正常" }}</span>
+        <span class="status-badge" :data-ok="wsConnected">WebSocket {{ wsConnected ? "已连接" : "未连接" }}</span>
+        <span class="status-badge neutral">SSTable {{ totalTables }}</span>
+      </div>
       <p v-if="error" class="error">{{ error }}</p>
     </header>
 
@@ -15,8 +23,10 @@
       @refresh-state="refreshState"
     />
 
+    <MetricsSummary :metrics="metrics" />
+
     <div class="main-grid">
-      <LevelView :levels="levels" />
+      <LevelView :levels="levels" :metrics="metrics" />
       <EventTimeline :events="events" />
     </div>
 
@@ -25,12 +35,14 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 
 import ConfigPanel from "../components/ConfigPanel.vue";
 import EventTimeline from "../components/EventTimeline.vue";
 import LevelView from "../components/LevelView.vue";
 import MetricsCharts from "../components/MetricsCharts.vue";
+import MetricsSummary from "../components/MetricsSummary.vue";
+import { totalSstableCount } from "../services/presentation";
 import { simApi } from "../services/api";
 import { createEventsSocket } from "../services/ws";
 import type { LSMConfig, MetricsSnapshot, TraceEvent, WorkloadOperation, WsMessage } from "../types/sim";
@@ -76,7 +88,10 @@ const metrics = reactive<MetricsSnapshot>({
 });
 const metricsHistory = ref<MetricsSnapshot[]>([]);
 const error = ref("");
+const wsConnected = ref(false);
 let ws: WebSocket | null = null;
+
+const totalTables = computed(() => totalSstableCount(levels.value));
 
 function pushMetricSnapshot(next: MetricsSnapshot): void {
   Object.assign(metrics, next);
@@ -149,6 +164,15 @@ async function runStep(operation: WorkloadOperation): Promise<void> {
 
 onMounted(async () => {
   ws = createEventsSocket(handleWsMessage);
+  ws.addEventListener("open", () => {
+    wsConnected.value = true;
+  });
+  ws.addEventListener("close", () => {
+    wsConnected.value = false;
+  });
+  ws.addEventListener("error", () => {
+    wsConnected.value = false;
+  });
   await refreshState();
 });
 
@@ -159,12 +183,17 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .page {
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 24px 16px 32px;
   display: grid;
-  gap: 14px;
-  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  gap: 16px;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #112033;
+  background:
+    radial-gradient(circle at top left, rgba(79, 132, 223, 0.12), transparent 28%),
+    linear-gradient(180deg, #f6f9fc 0%, #eef3f8 100%);
+  min-height: 100vh;
 }
 
 h1,
@@ -173,10 +202,49 @@ h3 {
   margin: 0;
 }
 
+.hero {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffffff, #f3f7fc);
+  border: 1px solid #d8e1eb;
+}
+
 header p {
   margin: 4px 0 0;
-  color: #555;
+  color: #566273;
   font-size: 13px;
+}
+
+.subline {
+  max-width: 860px;
+  line-height: 1.5;
+}
+
+.status-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-badge {
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fff1f0;
+  color: #b42318;
+}
+
+.status-badge[data-ok="true"] {
+  background: #e9f8ef;
+  color: #177245;
+}
+
+.status-badge.neutral {
+  background: #eef2f7;
+  color: #425164;
 }
 
 .error {
@@ -186,14 +254,15 @@ header p {
 .main-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.1fr 0.9fr;
 }
 
 .panel {
-  border: 1px solid #d9d9d9;
-  border-radius: 10px;
-  padding: 12px;
-  background: #fff;
+  border: 1px solid #d8e1eb;
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.04);
 }
 
 @media (max-width: 900px) {
