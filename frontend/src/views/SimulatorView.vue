@@ -4,7 +4,7 @@
       <div>
         <h1>LSM-Tree Simulator</h1>
         <p>面向教学与答辩演示的 LSM-Tree 可视化模拟系统。</p>
-        <p class="subline">当前页面聚焦结构演化、关键事件和读写代价，不追求工业级数据库界面复杂度。</p>
+        <p class="subline">当前页面聚焦结构演化、关键事件与读写代价，便于观察 LSM-Tree 在不同 workload 下的动态行为。</p>
       </div>
       <div class="status-group">
         <span class="status-badge" :data-ok="!error">REST {{ error ? "异常" : "正常" }}</span>

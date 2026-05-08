@@ -3,7 +3,7 @@
     <div class="section-head">
       <div>
         <h2>参数配置</h2>
-        <p>当前页面面向教学演示，支持手动配置写路径、查询路径和 compaction 相关参数。</p>
+        <p>支持配置写路径、查询路径与 compaction 相关参数，并可直接加载预置 workload。</p>
       </div>
       <span class="mode-badge">教学型模拟器</span>
     </div>
@@ -22,7 +22,7 @@
         </label>
         <div class="preset-actions">
           <button type="button" @click="loadConfigPreset">填充参数模板</button>
-          <small>仅填充表单，仍需点击“应用配置”后才会发送到后端。</small>
+          <small>填充表单后，可继续调整参数并应用到当前模拟器。</small>
         </div>
         <label>
           <span class="field-title">Workload 模板</span>
@@ -31,11 +31,11 @@
               {{ preset.label }}
             </option>
           </select>
-          <small>{{ selectedWorkloadPreset?.description }}</small>
+          <small>{{ workloadPresetSummary }}</small>
         </label>
         <div class="preset-actions">
           <button type="button" @click="loadWorkloadPreset">加载 workload 模板</button>
-          <small>加载后可继续手工编辑，适合答辩演示与课堂说明。</small>
+          <small>支持直接运行，也可以在文本框中继续调整。</small>
         </div>
       </div>
     </div>
@@ -116,7 +116,7 @@
         <span class="field-title">Workload 输入</span>
         <span class="field-code">支持 `put key value`、`get key`，也兼容旧格式 `key=value`</span>
         <textarea v-model="workloadText" rows="8" />
-        <small>可混合写入与查询。空行和以 # 开头的注释行会被忽略。</small>
+        <small>可混合写入与查询。当前共解析 {{ parsedWorkload.operations.length }} 条操作；空行和注释行会被忽略。</small>
       </label>
       <p v-if="parseErrors.length > 0" class="parse-error">{{ parseErrors.join("；") }}</p>
       <div class="step-box">
@@ -181,6 +181,13 @@ const selectedConfigPreset = computed(() =>
 const selectedWorkloadPreset = computed(() =>
   workloadPresets.find((preset) => preset.id === selectedWorkloadPresetId.value) ?? null
 );
+const workloadPresetSummary = computed(() => {
+  const preset = selectedWorkloadPreset.value;
+  if (!preset) {
+    return "未选择 workload 模板。";
+  }
+  return `${preset.description}`;
+});
 
 const workloadText = ref(workloadToText(workloadPresets[0]?.operations ?? []));
 const stepOp = ref<WorkloadOperation["op"]>("put");
@@ -280,12 +287,15 @@ function summarizeStepResponse(response: StepResponse): string {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(2, minmax(180px, 1fr));
+  align-items: stretch;
 }
 
 .preset-actions {
   display: grid;
   gap: 6px;
   align-content: start;
+  height: 100%;
+  padding-top: 22px;
 }
 
 .form-grid {
