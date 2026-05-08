@@ -70,17 +70,35 @@ class SimulatorService:
         with self._lock:
             event_start = len(self._sim.trace.events)
             op_name = str(operation.op)
-            if op_name != "put":
-                raise ValueError("only put operation is supported in current stage")
-
-            put_result = self._sim.put(operation.key, operation.value)
             flushed_table_id: str | None = None
-            if put_result.needs_flush:
-                flushed = self._sim.flush_memtable()
-                flushed_table_id = None if flushed is None else flushed.table_id
+
+            if op_name == "put":
+                if operation.value is None:
+                    raise ValueError("put operation requires a value")
+
+                put_result = self._sim.put(operation.key, operation.value)
+                if put_result.needs_flush:
+                    flushed = self._sim.flush_memtable()
+                    flushed_table_id = None if flushed is None else flushed.table_id
+
+                response = StepResponse(
+                    op="put",
+                    put_result=put_result.to_dict(),
+                    get_result=None,
+                    flushed_table_id=flushed_table_id,
+                )
+            elif op_name == "get":
+                get_result = self._sim.get(operation.key)
+                response = StepResponse(
+                    op="get",
+                    put_result=None,
+                    get_result=get_result.to_dict(),
+                    flushed_table_id=None,
+                )
+            else:
+                raise ValueError(f"unsupported operation: {op_name}")
 
             new_events = self._sim.trace.events[event_start:]
-            response = StepResponse(op="put", put_result=put_result.to_dict(), flushed_table_id=flushed_table_id)
             metrics = MetricsSnapshot.model_validate(self._sim.metrics.snapshot.model_dump(mode="json"))
             return StepExecution(response=response, new_events=new_events, metrics=metrics)
 

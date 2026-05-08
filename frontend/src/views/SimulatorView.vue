@@ -16,6 +16,7 @@
 
     <ConfigPanel
       :config="config"
+      :last-step-response="lastStepResponse"
       @apply-config="applyConfig"
       @reset-sim="resetSimulator"
       @run-workload="runWorkload"
@@ -48,7 +49,14 @@ import StructureCanvas from "../components/StructureCanvas.vue";
 import { totalSstableCount } from "../services/presentation";
 import { simApi } from "../services/api";
 import { createEventsSocket } from "../services/ws";
-import type { LSMConfig, MetricsSnapshot, TraceEvent, WorkloadOperation, WsMessage } from "../types/sim";
+import type {
+  LSMConfig,
+  MetricsSnapshot,
+  StepResponse,
+  TraceEvent,
+  WorkloadOperation,
+  WsMessage
+} from "../types/sim";
 
 const config = reactive<LSMConfig>({
   memtable_max_records: 1000,
@@ -90,6 +98,7 @@ const metrics = reactive<MetricsSnapshot>({
   data_block_read_io_total: 0
 });
 const metricsHistory = ref<MetricsSnapshot[]>([]);
+const lastStepResponse = ref<StepResponse | null>(null);
 const error = ref("");
 const wsConnected = ref(false);
 let ws: WebSocket | null = null;
@@ -132,6 +141,7 @@ async function refreshState(): Promise<void> {
 async function applyConfig(next: LSMConfig): Promise<void> {
   try {
     await simApi.applyConfig(next);
+    lastStepResponse.value = null;
     await refreshState();
   } catch (e) {
     error.value = (e as Error).message;
@@ -141,6 +151,7 @@ async function applyConfig(next: LSMConfig): Promise<void> {
 async function resetSimulator(): Promise<void> {
   try {
     await simApi.reset();
+    lastStepResponse.value = null;
     await refreshState();
   } catch (e) {
     error.value = (e as Error).message;
@@ -149,7 +160,8 @@ async function resetSimulator(): Promise<void> {
 
 async function runWorkload(operations: WorkloadOperation[]): Promise<void> {
   try {
-    await simApi.runWorkload(operations);
+    const response = await simApi.runWorkload(operations);
+    lastStepResponse.value = response.step_results.at(-1) ?? null;
     await refreshState();
   } catch (e) {
     error.value = (e as Error).message;
@@ -158,7 +170,7 @@ async function runWorkload(operations: WorkloadOperation[]): Promise<void> {
 
 async function runStep(operation: WorkloadOperation): Promise<void> {
   try {
-    await simApi.step(operation);
+    lastStepResponse.value = await simApi.step(operation);
     await refreshState();
   } catch (e) {
     error.value = (e as Error).message;

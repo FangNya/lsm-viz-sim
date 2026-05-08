@@ -218,7 +218,7 @@ function buildCanvasFocusFromEvent(event: TraceEvent | undefined): CanvasFocus {
   if (!event) {
     return {
       title: "等待操作",
-      description: "当前还没有新的 trace 事件。你可以执行一次 put、workload 或 reset 来观察结构变化。",
+      description: "当前还没有新的 trace 事件。你可以执行一次 put、get、workload 或 reset 来观察结构变化。",
       eventType: "idle",
       activeStages: [],
       activeLevels: [],

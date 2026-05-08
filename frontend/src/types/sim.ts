@@ -14,20 +14,28 @@ export interface LSMConfig {
 }
 
 export interface WorkloadOperation {
-  op: "put";
+  op: "put" | "get";
   key: string;
-  value: string;
+  value?: string;
 }
 
 export interface StepResponse {
-  op: "put";
+  op: "put" | "get";
   put_result: {
     success: boolean;
     seq: number;
     needs_flush: boolean;
     memtable_size_records: number;
     memtable_size_bytes: number;
-  };
+  } | null;
+  get_result: {
+    found: boolean;
+    value: string | null;
+    source: string | null;
+    level: number | null;
+    table_id: string | null;
+    path: Array<Record<string, unknown>>;
+  } | null;
   flushed_table_id: string | null;
 }
 

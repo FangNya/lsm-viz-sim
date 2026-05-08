@@ -3,9 +3,41 @@
     <div class="section-head">
       <div>
         <h2>参数配置</h2>
-        <p>当前页面面向教学演示，支持手动配置写路径与 compaction 相关参数。</p>
+        <p>当前页面面向教学演示，支持手动配置写路径、查询路径和 compaction 相关参数。</p>
       </div>
       <span class="mode-badge">教学型模拟器</span>
+    </div>
+
+    <div class="field-group">
+      <h3>预置模板</h3>
+      <div class="preset-grid">
+        <label>
+          <span class="field-title">参数模板</span>
+          <select v-model="selectedConfigPresetId">
+            <option v-for="preset in configPresets" :key="preset.id" :value="preset.id">
+              {{ preset.label }}
+            </option>
+          </select>
+          <small>{{ selectedConfigPreset?.description }}</small>
+        </label>
+        <div class="preset-actions">
+          <button type="button" @click="loadConfigPreset">填充参数模板</button>
+          <small>仅填充表单，仍需点击“应用配置”后才会发送到后端。</small>
+        </div>
+        <label>
+          <span class="field-title">Workload 模板</span>
+          <select v-model="selectedWorkloadPresetId">
+            <option v-for="preset in workloadPresets" :key="preset.id" :value="preset.id">
+              {{ preset.label }}
+            </option>
+          </select>
+          <small>{{ selectedWorkloadPreset?.description }}</small>
+        </label>
+        <div class="preset-actions">
+          <button type="button" @click="loadWorkloadPreset">加载 workload 模板</button>
+          <small>加载后可继续手工编辑，适合答辩演示与课堂说明。</small>
+        </div>
+      </div>
     </div>
 
     <div class="field-group">
@@ -82,30 +114,45 @@
     <div class="inputs">
       <label>
         <span class="field-title">Workload 输入</span>
-        <span class="field-code">当前阶段每行解析为一条 put：key=value</span>
-        <textarea v-model="workloadText" rows="6" />
+        <span class="field-code">支持 `put key value`、`get key`，也兼容旧格式 `key=value`</span>
+        <textarea v-model="workloadText" rows="8" />
+        <small>可混合写入与查询。空行和以 # 开头的注释行会被忽略。</small>
       </label>
+      <p v-if="parseErrors.length > 0" class="parse-error">{{ parseErrors.join("；") }}</p>
       <div class="step-box">
+        <label>
+          <span class="field-title">单步操作</span>
+          <select v-model="stepOp">
+            <option value="put">put</option>
+            <option value="get">get</option>
+          </select>
+        </label>
         <label>
           <span class="field-title">单步 key</span>
           <input v-model="stepKey" type="text" />
         </label>
-        <label>
+        <label v-if="stepOp === 'put'">
           <span class="field-title">单步 value</span>
           <input v-model="stepValue" type="text" />
         </label>
+      </div>
+      <div v-if="lastStepResponse" class="last-step">
+        <strong>最近一步结果</strong>
+        <p>{{ summarizeStepResponse(lastStepResponse) }}</p>
       </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 
-import type { LSMConfig, WorkloadOperation } from "../types/sim";
+import { configPresets, parseWorkloadText, workloadPresets, workloadToText } from "../services/demoPresets";
+import type { LSMConfig, StepResponse, WorkloadOperation } from "../types/sim";
 
 const props = defineProps<{
   config: LSMConfig;
+  lastStepResponse: StepResponse | null;
 }>();
 
 const emit = defineEmits<{
@@ -126,34 +173,74 @@ watch(
   { deep: true }
 );
 
-const workloadText = ref("k1=v1\nk2=v2\nk3=v3");
+const selectedConfigPresetId = ref(configPresets[0]?.id ?? "");
+const selectedWorkloadPresetId = ref(workloadPresets[0]?.id ?? "");
+const selectedConfigPreset = computed(() =>
+  configPresets.find((preset) => preset.id === selectedConfigPresetId.value) ?? null
+);
+const selectedWorkloadPreset = computed(() =>
+  workloadPresets.find((preset) => preset.id === selectedWorkloadPresetId.value) ?? null
+);
+
+const workloadText = ref(workloadToText(workloadPresets[0]?.operations ?? []));
+const stepOp = ref<WorkloadOperation["op"]>("put");
 const stepKey = ref("demo_key");
 const stepValue = ref("demo_value");
+const parsedWorkload = computed(() => parseWorkloadText(workloadText.value));
+const parseErrors = computed(() => parsedWorkload.value.errors);
+
+function loadConfigPreset(): void {
+  if (!selectedConfigPreset.value) {
+    return;
+  }
+  Object.assign(localConfig, selectedConfigPreset.value.values);
+}
+
+function loadWorkloadPreset(): void {
+  if (!selectedWorkloadPreset.value) {
+    return;
+  }
+  workloadText.value = workloadToText(selectedWorkloadPreset.value.operations);
+}
 
 function runWorkload(): void {
-  const operations = workloadText.value
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .map((line) => {
-      const [key, ...rest] = line.split("=");
-      return {
-        op: "put",
-        key: key.trim(),
-        value: rest.join("=").trim()
-      } satisfies WorkloadOperation;
-    })
-    .filter((op) => op.key.length > 0);
+  if (parsedWorkload.value.errors.length > 0) {
+    return;
+  }
 
-  emit("run-workload", operations);
+  emit("run-workload", parsedWorkload.value.operations);
 }
 
 function stepOnce(): void {
-  emit("step-once", {
-    op: "put",
-    key: stepKey.value,
-    value: stepValue.value
-  });
+  const operation: WorkloadOperation =
+    stepOp.value === "get"
+      ? {
+          op: "get",
+          key: stepKey.value
+        }
+      : {
+          op: "put",
+          key: stepKey.value,
+          value: stepValue.value
+        };
+
+  emit("step-once", operation);
+}
+
+function summarizeStepResponse(response: StepResponse): string {
+  if (response.op === "get" && response.get_result) {
+    return response.get_result.found
+      ? `get 命中：value=${response.get_result.value}，来源=${response.get_result.source ?? "-"}`
+      : "get 未命中：当前 key 不在 MemTable 或 SSTable 中。";
+  }
+
+  if (response.op === "put" && response.put_result) {
+    return response.flushed_table_id
+      ? `put 完成：seq=${response.put_result.seq}，并触发 flush，输出表 ${response.flushed_table_id}。`
+      : `put 完成：seq=${response.put_result.seq}，当前 MemTable=${response.put_result.memtable_size_records} 条。`;
+  }
+
+  return "最近一步暂无可展示结果。";
 }
 </script>
 
@@ -187,6 +274,18 @@ function stepOnce(): void {
 .field-group {
   display: grid;
   gap: 10px;
+}
+
+.preset-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+}
+
+.preset-actions {
+  display: grid;
+  gap: 6px;
+  align-content: start;
 }
 
 .form-grid {
@@ -258,11 +357,33 @@ button {
 .step-box {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+}
+
+.parse-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 13px;
+}
+
+.last-step {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #d8e1eb;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.last-step p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.5;
 }
 
 @media (max-width: 900px) {
   .section-head,
+  .preset-grid,
   .form-grid,
   .step-box {
     display: grid;
