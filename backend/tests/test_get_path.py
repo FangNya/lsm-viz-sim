@@ -56,6 +56,21 @@ def test_get_returns_latest_value_for_duplicate_key(tmp_path: Path) -> None:
     assert result.table_id == new_meta.table_id
 
 
+def test_get_returns_latest_value_for_duplicate_versions_in_same_sstable(tmp_path: Path) -> None:
+    config = LSMConfig(wal_dir=str(tmp_path / "wal"), data_dir=str(tmp_path / "data"))
+    simulator = LSMSimulator(config=config)
+
+    simulator.put("dup", "old")
+    simulator.put("dup", "new")
+    meta = simulator.flush_memtable()
+    result = simulator.get("dup")
+
+    assert meta is not None
+    assert result.found is True
+    assert result.value == "new"
+    assert result.table_id == meta.table_id
+
+
 def test_get_uses_bloom_to_skip_sstable_for_absent_key(tmp_path: Path) -> None:
     config = LSMConfig(
         wal_dir=str(tmp_path / "wal"),

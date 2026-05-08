@@ -89,6 +89,8 @@ class SSTableManager:
                 if not line.strip():
                     continue
                 payload = json.loads(line)
+                # Flush output keeps same-key versions ordered by descending seq,
+                # so the first matching record is the newest version in this SSTable.
                 if payload.get("key") == key:
                     return str(payload.get("value"))
         return None
