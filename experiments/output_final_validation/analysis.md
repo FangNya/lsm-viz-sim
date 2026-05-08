@@ -7,12 +7,18 @@
 - Total mismatches: 0
 - Result: all runs reached `validation_accuracy = 1.0`.
 
-## Global Comparison After LCS Lookup Optimization
+## Global Comparison After LCS Lookup Optimization And Versioned MemTable
 
 - In `12 / 12` workload-profile pairs, LCS read amplification is lower than STC.
 - In `10 / 12` pairs, LCS write amplification is higher than STC.
 - In `2 / 12` pairs, LCS write amplification is lower than STC.
-- In `5 / 12` pairs, LCS compaction count is lower than STC.
+- In `6 / 12` pairs, LCS compaction count is lower than STC.
+
+The experiment set has been rerun after the MemTable semantic refactor:
+
+- duplicate user keys are now kept as multiple versions in MemTable;
+- flush keeps duplicate versions and writes them into SSTables;
+- old versions are cleaned later during compaction instead of being overwritten inside MemTable.
 
 The two pairs where LCS keeps both lower read amplification and lower write amplification are:
 
