@@ -93,7 +93,7 @@ copy .env.example .env
 
 ```env
 BACKEND_PORT=8000
-FRONTEND_PORT=4173
+FRONTEND_PORT=5173
 ```
 
 ### 5.2 启动服务
@@ -114,7 +114,7 @@ docker compose logs --no-color --tail 100
 
 ### 5.4 访问地址
 
-- 前端主页：`http://127.0.0.1:4173`
+- 前端主页：`http://127.0.0.1:5173`
 - 后端健康检查：`http://127.0.0.1:8000/health`
 - 后端状态接口：`http://127.0.0.1:8000/sim/state`
 
@@ -258,10 +258,9 @@ python experiments/run_workloads.py --out experiments/output_final_validation
 
 ## 10. 常见问题
 
-### 10.1 为什么 Docker 前端地址是 4173，不是 5173？
+### 10.1 
 
 - 本地 Vite 开发模式默认使用 `5173`
-- Docker 部署时，Compose 默认把主机 `4173` 映射到容器 `5173`
 - 具体以 `.env` 中的 `FRONTEND_PORT` 为准
 
 ### 10.2 为什么浏览器访问前端后还能直接请求 `/sim`？

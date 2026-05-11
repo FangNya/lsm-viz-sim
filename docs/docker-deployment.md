@@ -84,7 +84,7 @@ Browser -> Frontend(Vite) -> Backend(FastAPI)
 
 ```env
 BACKEND_PORT=8000
-FRONTEND_PORT=4173
+FRONTEND_PORT=5173
 ```
 
 字段说明：
@@ -94,7 +94,7 @@ FRONTEND_PORT=4173
   - 默认 `8000`
 - `FRONTEND_PORT`
   - 主机侧暴露的前端端口
-  - 默认 `4173`
+  - 默认 `5173`
 
 说明：
 
@@ -181,7 +181,7 @@ curl http://127.0.0.1:8000/health
 
 打开：
 
-- `http://127.0.0.1:4173`
+- `http://127.0.0.1:5173`
 
 预期：页面能够正常显示 `LSM-Tree Simulator`。
 

@@ -24,7 +24,7 @@ services:
       - VITE_BACKEND_HTTP_TARGET=http://backend:8000
       - VITE_BACKEND_WS_TARGET=ws://backend:8000
     ports:
-      - "${FRONTEND_PORT:-4173}:5173"
+      - "${FRONTEND_PORT:-5173}:5173"
     depends_on:
       backend:
         condition: service_healthy
