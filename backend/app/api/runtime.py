@@ -127,5 +127,17 @@ class SimulatorService:
 
         return out
 
+    def export_metrics(self, fmt: str) -> str:
+        with self._lock:
+            export_dir = self._sim.sstable.data_root / "exports"
+            if fmt == "json":
+                out = self._sim.export_metrics_json(str(export_dir / "metrics.json"))
+            elif fmt == "csv":
+                out = self._sim.export_metrics_csv(str(export_dir / "metrics.csv"))
+            else:
+                raise ValueError("format must be json or csv")
+
+        return out
+
 
 service = SimulatorService()

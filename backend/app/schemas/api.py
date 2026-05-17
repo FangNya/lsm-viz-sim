@@ -46,3 +46,8 @@ class ConfigResponse(BaseModel):
 class ExportTraceResponse(BaseModel):
     format: Literal["json", "csv"]
     content: str
+
+
+class ExportMetricsResponse(BaseModel):
+    format: Literal["json", "csv"]
+    content: str

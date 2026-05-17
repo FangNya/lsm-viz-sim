@@ -11,6 +11,7 @@
         <span class="status-badge" :data-ok="wsConnected">WebSocket {{ wsConnected ? "已连接" : "未连接" }}</span>
         <span class="status-badge neutral">SSTable {{ totalTables }}</span>
       </div>
+      <p v-if="exportNotice" class="notice">{{ exportNotice }}</p>
       <p v-if="error" class="error">{{ error }}</p>
     </header>
 
@@ -22,6 +23,8 @@
       @run-workload="runWorkload"
       @step-once="runStep"
       @refresh-state="refreshState"
+      @export-metrics="exportMetrics"
+      @export-trace="exportTrace"
     />
 
     <MetricsSummary :metrics="metrics" />
@@ -100,6 +103,7 @@ const metrics = reactive<MetricsSnapshot>({
 const metricsHistory = ref<MetricsSnapshot[]>([]);
 const lastStepResponse = ref<StepResponse | null>(null);
 const error = ref("");
+const exportNotice = ref("");
 const wsConnected = ref(false);
 let ws: WebSocket | null = null;
 
@@ -175,6 +179,44 @@ async function runStep(operation: WorkloadOperation): Promise<void> {
   } catch (e) {
     error.value = (e as Error).message;
   }
+}
+
+async function exportMetrics(format: "json" | "csv"): Promise<void> {
+  try {
+    const response = await simApi.exportMetrics(format);
+    downloadTextFile(response.content, `metrics-export.${format}`, mimeTypeFor(format));
+    exportNotice.value = `Metrics 已导出为 metrics-export.${format}`;
+    error.value = "";
+  } catch (e) {
+    error.value = (e as Error).message;
+  }
+}
+
+async function exportTrace(format: "json" | "csv"): Promise<void> {
+  try {
+    const response = await simApi.exportTrace(format);
+    downloadTextFile(response.content, `trace-export.${format}`, mimeTypeFor(format));
+    exportNotice.value = `Trace 已导出为 trace-export.${format}`;
+    error.value = "";
+  } catch (e) {
+    error.value = (e as Error).message;
+  }
+}
+
+function downloadTextFile(content: string, filename: string, mimeType: string): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function mimeTypeFor(format: "json" | "csv"): string {
+  return format === "json" ? "application/json;charset=utf-8" : "text/csv;charset=utf-8";
 }
 
 onMounted(async () => {
@@ -264,6 +306,10 @@ header p {
 
 .error {
   color: #b90000;
+}
+
+.notice {
+  color: #1c4fa1;
 }
 
 .main-grid {

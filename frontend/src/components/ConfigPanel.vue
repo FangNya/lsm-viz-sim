@@ -111,6 +111,28 @@
       <button type="button" @click="emit('refresh-state')">刷新状态</button>
     </div>
 
+    <div class="field-group">
+      <h3>结果导出</h3>
+      <div class="export-grid">
+        <div class="export-card">
+          <strong>Metrics 导出</strong>
+          <small>JSON 包含当前快照与完整历史；CSV 以固定表头导出全部历史快照。</small>
+          <div class="export-actions">
+            <button type="button" @click="emit('export-metrics', 'json')">导出 Metrics JSON</button>
+            <button type="button" @click="emit('export-metrics', 'csv')">导出 Metrics CSV</button>
+          </div>
+        </div>
+        <div class="export-card">
+          <strong>Trace 导出</strong>
+          <small>JSON 导出全部事件数组；CSV 固定为 event_id、event_type、timestamp、seq、payload_json 五列。</small>
+          <div class="export-actions">
+            <button type="button" @click="emit('export-trace', 'json')">导出 Trace JSON</button>
+            <button type="button" @click="emit('export-trace', 'csv')">导出 Trace CSV</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="inputs">
       <label>
         <span class="field-title">Workload 输入</span>
@@ -161,6 +183,8 @@ const emit = defineEmits<{
   (e: "run-workload", operations: WorkloadOperation[]): void;
   (e: "step-once", operation: WorkloadOperation): void;
   (e: "refresh-state"): void;
+  (e: "export-metrics", format: "json" | "csv"): void;
+  (e: "export-trace", format: "json" | "csv"): void;
 }>();
 
 const localConfig = reactive<LSMConfig>({ ...props.config });
@@ -359,6 +383,27 @@ button {
   gap: 8px;
 }
 
+.export-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
+.export-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #d8e1eb;
+  border-radius: 12px;
+  background: #f9fbff;
+}
+
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .inputs {
   display: grid;
   gap: 10px;
@@ -395,7 +440,8 @@ button {
   .section-head,
   .preset-grid,
   .form-grid,
-  .step-box {
+  .step-box,
+  .export-grid {
     display: grid;
     grid-template-columns: 1fr;
   }

@@ -54,5 +54,9 @@ export const simApi = {
 
   exportTrace(format: "json" | "csv"): Promise<{ format: string; content: string }> {
     return request(`/sim/export/trace?format=${format}`);
+  },
+
+  exportMetrics(format: "json" | "csv"): Promise<{ format: string; content: string }> {
+    return request(`/sim/export/metrics?format=${format}`);
   }
 };

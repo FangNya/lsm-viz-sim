@@ -107,3 +107,23 @@ def test_export_trace_json_and_csv(tmp_path: Path) -> None:
     csv_payload = export_csv.json()
     assert csv_payload["format"] == "csv"
     assert "event_id,event_type,timestamp,seq,payload_json" in csv_payload["content"]
+
+
+def test_export_metrics_json_and_csv(tmp_path: Path) -> None:
+    _set_temp_config(tmp_path)
+    client.post("/sim/reset")
+    client.post("/sim/step", json={"operation": {"op": "put", "key": "x", "value": "1"}})
+    client.post("/sim/step", json={"operation": {"op": "get", "key": "x"}})
+
+    export_json = client.get("/sim/export/metrics", params={"format": "json"})
+    assert export_json.status_code == 200
+    json_payload = export_json.json()
+    assert json_payload["format"] == "json"
+    assert "\"snapshot\"" in json_payload["content"]
+    assert "\"history\"" in json_payload["content"]
+
+    export_csv = client.get("/sim/export/metrics", params={"format": "csv"})
+    assert export_csv.status_code == 200
+    csv_payload = export_csv.json()
+    assert csv_payload["format"] == "csv"
+    assert "timestamp,reason,total_puts,total_gets" in csv_payload["content"]
