@@ -14,20 +14,28 @@ export interface LSMConfig {
 }
 
 export interface WorkloadOperation {
-  op: "put";
+  op: "put" | "get";
   key: string;
-  value: string;
+  value?: string;
 }
 
 export interface StepResponse {
-  op: "put";
+  op: "put" | "get";
   put_result: {
     success: boolean;
     seq: number;
     needs_flush: boolean;
     memtable_size_records: number;
     memtable_size_bytes: number;
-  };
+  } | null;
+  get_result: {
+    found: boolean;
+    value: string | null;
+    source: string | null;
+    level: number | null;
+    table_id: string | null;
+    path: Array<Record<string, unknown>>;
+  } | null;
   flushed_table_id: string | null;
 }
 
@@ -46,8 +54,19 @@ export interface MetricsSnapshot {
   compaction_count: number;
   read_amplification: number;
   write_amplification: number;
-  simulated_io_reads: number;
-  simulated_io_writes: number;
+  logical_write_bytes_total: number;
+  wal_write_bytes_total: number;
+  flush_data_write_bytes_total: number;
+  flush_meta_write_bytes_total: number;
+  flush_bloom_write_bytes_total: number;
+  compaction_data_write_bytes_total: number;
+  compaction_meta_write_bytes_total: number;
+  compaction_bloom_write_bytes_total: number;
+  actual_disk_write_bytes_total: number;
+  user_query_read_io_total: number;
+  bloom_read_io_total: number;
+  index_read_io_total: number;
+  data_block_read_io_total: number;
 }
 
 export interface TraceEvent {

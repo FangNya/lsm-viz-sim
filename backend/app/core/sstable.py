@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from math import ceil
 from pathlib import Path
 
 from app.core.bloom import BloomFilter
@@ -12,6 +13,7 @@ class SSTableManager:
     """Teaching-format SSTable manager (JSONL data + JSON metadata)."""
 
     TABLE_ID_WIDTH = 6
+    PAGE_SIZE = 4096
 
     def __init__(self, data_dir: str, bloom_bits_per_key: int) -> None:
         self.data_root = Path(data_dir)
@@ -87,6 +89,8 @@ class SSTableManager:
                 if not line.strip():
                     continue
                 payload = json.loads(line)
+                # Flush output keeps same-key versions ordered by descending seq,
+                # so the first matching record is the newest version in this SSTable.
                 if payload.get("key") == key:
                     return str(payload.get("value"))
         return None
@@ -111,6 +115,27 @@ class SSTableManager:
             path = Path(path_str)
             if path.exists():
                 path.unlink()
+
+    def file_size(self, path_str: str | None) -> int:
+        if not path_str:
+            return 0
+        path = Path(path_str)
+        if not path.exists():
+            return 0
+        return path.stat().st_size
+
+    def table_file_sizes(self, meta: SSTableMeta) -> dict[str, int]:
+        return {
+            "data": self.file_size(meta.data_file),
+            "meta": self.file_size(meta.meta_file),
+            "bloom": self.file_size(meta.bloom_file),
+        }
+
+    def bloom_pages(self, meta: SSTableMeta) -> int:
+        bloom_size = self.file_size(meta.bloom_file)
+        if bloom_size <= 0:
+            return 0
+        return ceil(bloom_size / self.PAGE_SIZE)
 
     def _next_table_id(self) -> str:
         pattern = re.compile(r"^sst_(\d{6})\.meta\.json$")

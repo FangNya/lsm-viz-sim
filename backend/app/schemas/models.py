@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class CompactionStrategy(str, Enum):
@@ -14,6 +14,7 @@ class CompactionStrategy(str, Enum):
 
 class OperationType(str, Enum):
     PUT = "put"
+    GET = "get"
 
 
 class LSMConfig(BaseModel):
@@ -36,12 +37,10 @@ class LSMConfig(BaseModel):
 class Record(BaseModel):
     """Canonical in-memory record shape."""
 
-    model_config = ConfigDict(use_enum_values=True)
-
     key: str
     value: str
     seq: int = Field(ge=0)
-    op: OperationType = OperationType.PUT
+    op: Literal["put"] = "put"
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -84,10 +83,21 @@ class MetricsSnapshot(BaseModel):
     sstable_count_by_level: dict[int, int] = Field(default_factory=dict)
     flush_count: int = Field(default=0, ge=0)
     compaction_count: int = Field(default=0, ge=0)
-    read_amplification: float = Field(default=1.0, ge=0.0)
-    write_amplification: float = Field(default=1.0, ge=0.0)
-    simulated_io_reads: int = Field(default=0, ge=0)
-    simulated_io_writes: int = Field(default=0, ge=0)
+    read_amplification: float = Field(default=0.0, ge=0.0)
+    write_amplification: float = Field(default=0.0, ge=0.0)
+    logical_write_bytes_total: int = Field(default=0, ge=0)
+    wal_write_bytes_total: int = Field(default=0, ge=0)
+    flush_data_write_bytes_total: int = Field(default=0, ge=0)
+    flush_meta_write_bytes_total: int = Field(default=0, ge=0)
+    flush_bloom_write_bytes_total: int = Field(default=0, ge=0)
+    compaction_data_write_bytes_total: int = Field(default=0, ge=0)
+    compaction_meta_write_bytes_total: int = Field(default=0, ge=0)
+    compaction_bloom_write_bytes_total: int = Field(default=0, ge=0)
+    actual_disk_write_bytes_total: int = Field(default=0, ge=0)
+    user_query_read_io_total: int = Field(default=0, ge=0)
+    bloom_read_io_total: int = Field(default=0, ge=0)
+    index_read_io_total: int = Field(default=0, ge=0)
+    data_block_read_io_total: int = Field(default=0, ge=0)
 
 
 class CompactionTask(BaseModel):
@@ -109,5 +119,11 @@ class WorkloadOperation(BaseModel):
 
     op: OperationType = OperationType.PUT
     key: str
-    value: str
+    value: str | None = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @model_validator(mode="after")
+    def validate_value_requirement(self) -> "WorkloadOperation":
+        if self.op == OperationType.PUT and self.value is None:
+            raise ValueError("put operation requires value")
+        return self

@@ -88,11 +88,11 @@ class LSMSimulator:
         seq = self._next_seq
 
         wal_record = WALRecord(key=key, value=value, seq=seq)
-        self.wal.append(wal_record)
-        self.metrics.add_io_writes(1)
+        wal_bytes = self.wal.append(wal_record)
+        self.metrics.add_logical_write_bytes(self._logical_write_bytes(key, value))
+        self.metrics.add_wal_write_bytes(wal_bytes)
 
         self.memtable.put(Record(key=key, value=value, seq=seq))
-        self.metrics.add_io_writes(1)
         self.metrics.inc_put()
 
         self.trace.emit(
@@ -132,7 +132,12 @@ class LSMSimulator:
         self.memtable.clear()
 
         self.metrics.inc_flush()
-        self.metrics.add_io_writes(len(records) + 2)
+        file_sizes = self.sstable.table_file_sizes(meta)
+        self.metrics.add_flush_write_bytes(
+            data_bytes=file_sizes["data"],
+            meta_bytes=file_sizes["meta"],
+            bloom_bytes=file_sizes["bloom"],
+        )
 
         self.trace.emit(
             event_type="sstable_created",
@@ -178,14 +183,14 @@ class LSMSimulator:
                 results.append(result)
 
                 self.metrics.inc_compaction()
-                self.metrics.add_io_reads(max(len(result.input_table_ids), 1))
-                output_count = 0
-                target_tables = self.level_tables.get(result.target_level, [])
-                for table in target_tables:
-                    if table.table_id == result.output_table_id:
-                        output_count = table.record_count
-                        break
-                self.metrics.add_io_writes(output_count + 2)
+                output_meta = self._find_level_table(result.target_level, result.output_table_id)
+                if output_meta is not None:
+                    file_sizes = self.sstable.table_file_sizes(output_meta)
+                    self.metrics.add_compaction_write_bytes(
+                        data_bytes=file_sizes["data"],
+                        meta_bytes=file_sizes["meta"],
+                        bloom_bytes=file_sizes["bloom"],
+                    )
 
                 self.trace.emit(
                     event_type="sstable_created",
@@ -232,14 +237,14 @@ class LSMSimulator:
         path.append({"step": "memtable", "result": "miss"})
 
         for level in range(self.config.max_levels):
-            tables = self.level_tables.get(level, [])
-            ordered_tables = list(reversed(tables))
+            ordered_tables = self._candidate_tables_for_get(level, key, path)
 
             level_hit = False
             for meta in ordered_tables:
                 bloom = self.sstable.load_bloom(meta)
                 if bloom is not None:
-                    self.metrics.add_io_reads(1)
+                    bloom_io = self.sstable.bloom_pages(meta)
+                    self.metrics.add_query_bloom_io(bloom_io)
                     if not bloom.might_contain(key):
                         self.trace.emit(
                             event_type="bloom_miss",
@@ -253,6 +258,10 @@ class LSMSimulator:
                                 "table_id": meta.table_id,
                                 "bloom": "definitely_not_present",
                                 "action": "skip",
+                                "bloom_io": bloom_io,
+                                "index_io": 0,
+                                "data_io": 0,
+                                "query_io": bloom_io,
                             }
                         )
                         continue
@@ -262,7 +271,12 @@ class LSMSimulator:
                         seq=self._next_seq,
                         payload={"key": key, "level": level, "table_id": meta.table_id},
                     )
+                else:
+                    bloom_io = 0
 
+                # Index/Data block costs are teaching abstractions for query-path explanation.
+                self.metrics.add_query_index_io(1)
+                self.metrics.add_query_data_io(1)
                 path.append(
                     {
                         "step": "sstable",
@@ -270,9 +284,12 @@ class LSMSimulator:
                         "table_id": meta.table_id,
                         "bloom": "maybe_present" if bloom is not None else "missing",
                         "action": "scan",
+                        "bloom_io": bloom_io,
+                        "index_io": 1,
+                        "data_io": 1,
+                        "query_io": bloom_io + 2,
                     }
                 )
-                self.metrics.add_io_reads(1)
                 value = self.sstable.find_key(meta, key)
                 if value is not None:
                     level_hit = True
@@ -331,3 +348,42 @@ class LSMSimulator:
         counts = {level: len(tables) for level, tables in self.level_tables.items()}
         self.metrics.set_sstable_counts(counts)
         self.metrics.capture(reason)
+
+    def _logical_write_bytes(self, key: str, value: str) -> int:
+        return len(key.encode("utf-8")) + len(value.encode("utf-8"))
+
+    def _find_level_table(self, level: int, table_id: str) -> SSTableMeta | None:
+        for table in self.level_tables.get(level, []):
+            if table.table_id == table_id:
+                return table
+        return None
+
+    def _candidate_tables_for_get(
+        self,
+        level: int,
+        key: str,
+        path: list[dict[str, Any]],
+    ) -> list[SSTableMeta]:
+        tables = self.level_tables.get(level, [])
+        if not self._should_use_lcs_level_lookup(level):
+            return list(reversed(tables))
+
+        candidates = self.compaction_strategy.find_candidate_tables(self, level, key)
+        path.append(
+            {
+                "step": "level_lookup",
+                "level": level,
+                "strategy": "lcs",
+                "mode": "binary_range_lookup",
+                "candidate_table_ids": [meta.table_id for meta in candidates],
+                "pruned_table_count": max(len(tables) - len(candidates), 0),
+            }
+        )
+        return list(reversed(candidates))
+
+    def _should_use_lcs_level_lookup(self, level: int) -> bool:
+        return (
+            self.config.compaction_strategy == CompactionStrategy.LCS.value
+            and isinstance(self.compaction_strategy, LCSCompactionStrategy)
+            and level >= 1
+        )

@@ -8,6 +8,7 @@ from app.api.runtime import service
 from app.schemas import LSMConfig
 from app.schemas.api import (
     ConfigResponse,
+    ExportMetricsResponse,
     ExportTraceResponse,
     ResetResponse,
     RunWorkloadRequest,
@@ -80,6 +81,13 @@ def export_trace(format: str = Query(default="json", pattern="^(json|csv)$")) ->
     out = service.export_trace(format)
     content = Path(out).read_text(encoding="utf-8")
     return ExportTraceResponse(format=format, content=content)
+
+
+@router.get("/export/metrics", response_model=ExportMetricsResponse)
+def export_metrics(format: str = Query(default="json", pattern="^(json|csv)$")) -> ExportMetricsResponse:
+    out = service.export_metrics(format)
+    content = Path(out).read_text(encoding="utf-8")
+    return ExportMetricsResponse(format=format, content=content)
 
 
 @ws_router.websocket("/ws/events")

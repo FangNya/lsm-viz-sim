@@ -13,7 +13,9 @@ class WALManager:
         self.wal_dir.mkdir(parents=True, exist_ok=True)
         self.wal_file = self.wal_dir / file_name
 
-    def append(self, record: WALRecord) -> None:
+    def append(self, record: WALRecord) -> int:
+        before_size = self.wal_file.stat().st_size if self.wal_file.exists() else 0
         line = record.model_dump_json()
-        with self.wal_file.open("a", encoding="utf-8") as f:
+        with self.wal_file.open("a", encoding="utf-8", newline="\n") as f:
             f.write(line + "\n")
+        return self.wal_file.stat().st_size - before_size

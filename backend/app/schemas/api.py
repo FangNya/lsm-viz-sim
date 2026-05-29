@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -16,8 +16,9 @@ class StepRequest(BaseModel):
 
 
 class StepResponse(BaseModel):
-    op: Literal["put"]
-    put_result: dict
+    op: Literal["put", "get"]
+    put_result: dict[str, Any] | None = None
+    get_result: dict[str, Any] | None = None
     flushed_table_id: str | None = None
 
 
@@ -43,5 +44,10 @@ class ConfigResponse(BaseModel):
 
 
 class ExportTraceResponse(BaseModel):
+    format: Literal["json", "csv"]
+    content: str
+
+
+class ExportMetricsResponse(BaseModel):
     format: Literal["json", "csv"]
     content: str

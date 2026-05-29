@@ -4,10 +4,10 @@ from app.schemas import Record
 
 
 class MemTable:
-    """Teaching-oriented in-memory table based on Python dict."""
+    """Teaching-oriented in-memory table with per-key version lists."""
 
     def __init__(self) -> None:
-        self._records: dict[str, Record] = {}
+        self._records: dict[str, list[Record]] = {}
         self._size_bytes: int = 0
 
     @staticmethod
@@ -15,21 +15,21 @@ class MemTable:
         return len(record.key.encode("utf-8")) + len(record.value.encode("utf-8")) + 16
 
     def put(self, record: Record) -> None:
-        old = self._records.get(record.key)
-        if old is not None:
-            self._size_bytes -= self._estimate_record_bytes(old)
-
-        self._records[record.key] = record
+        self._records.setdefault(record.key, []).append(record)
         self._size_bytes += self._estimate_record_bytes(record)
 
     def get(self, key: str) -> str | None:
-        record = self._records.get(key)
-        if record is None:
+        versions = self._records.get(key)
+        if not versions:
             return None
-        return record.value
+        return versions[-1].value
 
     def sorted_records(self) -> list[Record]:
-        return [self._records[key] for key in sorted(self._records.keys())]
+        ordered: list[Record] = []
+        for key in sorted(self._records.keys()):
+            versions = sorted(self._records[key], key=lambda record: record.seq, reverse=True)
+            ordered.extend(versions)
+        return ordered
 
     def clear(self) -> None:
         self._records.clear()
@@ -37,7 +37,7 @@ class MemTable:
 
     @property
     def size_records(self) -> int:
-        return len(self._records)
+        return sum(len(versions) for versions in self._records.values())
 
     @property
     def size_bytes(self) -> int:

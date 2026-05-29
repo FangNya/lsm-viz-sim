@@ -19,5 +19,9 @@ frontend/dist/
 .vscode/
 .idea/
 
-# experiment output
-experiments/output/
+# experiment output data
+experiments/output*/**/*.json
+experiments/output*/**/*.csv
+experiments/output*/**/*.jsonl
+
+final bylw/

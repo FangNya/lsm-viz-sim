@@ -66,8 +66,11 @@ def test_metrics_snapshot_defaults() -> None:
     assert snapshot.total_puts == 0
     assert snapshot.total_gets == 0
     assert snapshot.sstable_count_by_level == {}
-    assert snapshot.read_amplification == 1.0
-    assert snapshot.write_amplification == 1.0
+    assert snapshot.read_amplification == 0.0
+    assert snapshot.write_amplification == 0.0
+    assert snapshot.logical_write_bytes_total == 0
+    assert snapshot.actual_disk_write_bytes_total == 0
+    assert snapshot.user_query_read_io_total == 0
 
 
 def test_workload_and_compaction_enum_constraints() -> None:

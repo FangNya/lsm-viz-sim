@@ -1,22 +1,38 @@
-<template>
+﻿<template>
   <div class="page">
-    <header>
-      <h1>LSM-Tree Simulator</h1>
-      <p>中期最小可演示页面（功能优先，样式从简）</p>
+    <header class="hero">
+      <div>
+        <h1>LSM-Tree Simulator</h1>
+        <p>面向教学与答辩演示的 LSM-Tree 可视化模拟系统。</p>
+        <p class="subline">当前页面聚焦结构演化、关键事件与读写代价，便于观察 LSM-Tree 在不同 workload 下的动态行为。</p>
+      </div>
+      <div class="status-group">
+        <span class="status-badge" :data-ok="!error">REST {{ error ? "异常" : "正常" }}</span>
+        <span class="status-badge" :data-ok="wsConnected">WebSocket {{ wsConnected ? "已连接" : "未连接" }}</span>
+        <span class="status-badge neutral">SSTable {{ totalTables }}</span>
+      </div>
+      <p v-if="exportNotice" class="notice">{{ exportNotice }}</p>
       <p v-if="error" class="error">{{ error }}</p>
     </header>
 
     <ConfigPanel
       :config="config"
+      :last-step-response="lastStepResponse"
       @apply-config="applyConfig"
       @reset-sim="resetSimulator"
       @run-workload="runWorkload"
       @step-once="runStep"
       @refresh-state="refreshState"
+      @export-metrics="exportMetrics"
+      @export-trace="exportTrace"
     />
 
+    <MetricsSummary :metrics="metrics" />
+
+    <StructureCanvas :config="config" :levels="levels" :metrics="metrics" :events="events" />
+
     <div class="main-grid">
-      <LevelView :levels="levels" />
+      <LevelView :levels="levels" :metrics="metrics" />
       <EventTimeline :events="events" />
     </div>
 
@@ -25,15 +41,25 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 
 import ConfigPanel from "../components/ConfigPanel.vue";
 import EventTimeline from "../components/EventTimeline.vue";
 import LevelView from "../components/LevelView.vue";
 import MetricsCharts from "../components/MetricsCharts.vue";
+import MetricsSummary from "../components/MetricsSummary.vue";
+import StructureCanvas from "../components/StructureCanvas.vue";
+import { totalSstableCount } from "../services/presentation";
 import { simApi } from "../services/api";
 import { createEventsSocket } from "../services/ws";
-import type { LSMConfig, MetricsSnapshot, TraceEvent, WorkloadOperation, WsMessage } from "../types/sim";
+import type {
+  LSMConfig,
+  MetricsSnapshot,
+  StepResponse,
+  TraceEvent,
+  WorkloadOperation,
+  WsMessage
+} from "../types/sim";
 
 const config = reactive<LSMConfig>({
   memtable_max_records: 1000,
@@ -60,12 +86,28 @@ const metrics = reactive<MetricsSnapshot>({
   compaction_count: 0,
   read_amplification: 0,
   write_amplification: 0,
-  simulated_io_reads: 0,
-  simulated_io_writes: 0
+  logical_write_bytes_total: 0,
+  wal_write_bytes_total: 0,
+  flush_data_write_bytes_total: 0,
+  flush_meta_write_bytes_total: 0,
+  flush_bloom_write_bytes_total: 0,
+  compaction_data_write_bytes_total: 0,
+  compaction_meta_write_bytes_total: 0,
+  compaction_bloom_write_bytes_total: 0,
+  actual_disk_write_bytes_total: 0,
+  user_query_read_io_total: 0,
+  bloom_read_io_total: 0,
+  index_read_io_total: 0,
+  data_block_read_io_total: 0
 });
 const metricsHistory = ref<MetricsSnapshot[]>([]);
+const lastStepResponse = ref<StepResponse | null>(null);
 const error = ref("");
+const exportNotice = ref("");
+const wsConnected = ref(false);
 let ws: WebSocket | null = null;
+
+const totalTables = computed(() => totalSstableCount(levels.value));
 
 function pushMetricSnapshot(next: MetricsSnapshot): void {
   Object.assign(metrics, next);
@@ -103,6 +145,7 @@ async function refreshState(): Promise<void> {
 async function applyConfig(next: LSMConfig): Promise<void> {
   try {
     await simApi.applyConfig(next);
+    lastStepResponse.value = null;
     await refreshState();
   } catch (e) {
     error.value = (e as Error).message;
@@ -112,6 +155,7 @@ async function applyConfig(next: LSMConfig): Promise<void> {
 async function resetSimulator(): Promise<void> {
   try {
     await simApi.reset();
+    lastStepResponse.value = null;
     await refreshState();
   } catch (e) {
     error.value = (e as Error).message;
@@ -120,7 +164,8 @@ async function resetSimulator(): Promise<void> {
 
 async function runWorkload(operations: WorkloadOperation[]): Promise<void> {
   try {
-    await simApi.runWorkload(operations);
+    const response = await simApi.runWorkload(operations);
+    lastStepResponse.value = response.step_results.at(-1) ?? null;
     await refreshState();
   } catch (e) {
     error.value = (e as Error).message;
@@ -129,15 +174,62 @@ async function runWorkload(operations: WorkloadOperation[]): Promise<void> {
 
 async function runStep(operation: WorkloadOperation): Promise<void> {
   try {
-    await simApi.step(operation);
+    lastStepResponse.value = await simApi.step(operation);
     await refreshState();
   } catch (e) {
     error.value = (e as Error).message;
   }
 }
 
+async function exportMetrics(format: "json" | "csv"): Promise<void> {
+  try {
+    const response = await simApi.exportMetrics(format);
+    downloadTextFile(response.content, `metrics-export.${format}`, mimeTypeFor(format));
+    exportNotice.value = `Metrics 已导出为 metrics-export.${format}`;
+    error.value = "";
+  } catch (e) {
+    error.value = (e as Error).message;
+  }
+}
+
+async function exportTrace(format: "json" | "csv"): Promise<void> {
+  try {
+    const response = await simApi.exportTrace(format);
+    downloadTextFile(response.content, `trace-export.${format}`, mimeTypeFor(format));
+    exportNotice.value = `Trace 已导出为 trace-export.${format}`;
+    error.value = "";
+  } catch (e) {
+    error.value = (e as Error).message;
+  }
+}
+
+function downloadTextFile(content: string, filename: string, mimeType: string): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function mimeTypeFor(format: "json" | "csv"): string {
+  return format === "json" ? "application/json;charset=utf-8" : "text/csv;charset=utf-8";
+}
+
 onMounted(async () => {
   ws = createEventsSocket(handleWsMessage);
+  ws.addEventListener("open", () => {
+    wsConnected.value = true;
+  });
+  ws.addEventListener("close", () => {
+    wsConnected.value = false;
+  });
+  ws.addEventListener("error", () => {
+    wsConnected.value = false;
+  });
   await refreshState();
 });
 
@@ -148,12 +240,17 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .page {
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 24px 16px 32px;
   display: grid;
-  gap: 14px;
-  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  gap: 16px;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #112033;
+  background:
+    radial-gradient(circle at top left, rgba(79, 132, 223, 0.12), transparent 28%),
+    linear-gradient(180deg, #f6f9fc 0%, #eef3f8 100%);
+  min-height: 100vh;
 }
 
 h1,
@@ -162,27 +259,71 @@ h3 {
   margin: 0;
 }
 
+.hero {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffffff, #f3f7fc);
+  border: 1px solid #d8e1eb;
+}
+
 header p {
   margin: 4px 0 0;
-  color: #555;
+  color: #566273;
   font-size: 13px;
+}
+
+.subline {
+  max-width: 860px;
+  line-height: 1.5;
+}
+
+.status-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-badge {
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fff1f0;
+  color: #b42318;
+}
+
+.status-badge[data-ok="true"] {
+  background: #e9f8ef;
+  color: #177245;
+}
+
+.status-badge.neutral {
+  background: #eef2f7;
+  color: #425164;
 }
 
 .error {
   color: #b90000;
 }
 
+.notice {
+  color: #1c4fa1;
+}
+
 .main-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.1fr 0.9fr;
 }
 
 .panel {
-  border: 1px solid #d9d9d9;
-  border-radius: 10px;
-  padding: 12px;
-  background: #fff;
+  border: 1px solid #d8e1eb;
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.04);
 }
 
 @media (max-width: 900px) {

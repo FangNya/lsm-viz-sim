@@ -3,17 +3,31 @@ services:
     build:
       context: ./backend
     container_name: lsm_backend
+    restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - lsm_backend_data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   frontend:
     build:
       context: ./frontend
     container_name: lsm_frontend
+    restart: unless-stopped
     environment:
       - VITE_BACKEND_HTTP_TARGET=http://backend:8000
       - VITE_BACKEND_WS_TARGET=ws://backend:8000
     ports:
-      - "5173:5173"
+      - "${FRONTEND_PORT:-5173}:5173"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+
+volumes:
+  lsm_backend_data:

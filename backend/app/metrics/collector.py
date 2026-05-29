@@ -23,8 +23,19 @@ class MetricsCollector:
         "compaction_count",
         "read_amplification",
         "write_amplification",
-        "simulated_io_reads",
-        "simulated_io_writes",
+        "logical_write_bytes_total",
+        "wal_write_bytes_total",
+        "flush_data_write_bytes_total",
+        "flush_meta_write_bytes_total",
+        "flush_bloom_write_bytes_total",
+        "compaction_data_write_bytes_total",
+        "compaction_meta_write_bytes_total",
+        "compaction_bloom_write_bytes_total",
+        "actual_disk_write_bytes_total",
+        "user_query_read_io_total",
+        "bloom_read_io_total",
+        "index_read_io_total",
+        "data_block_read_io_total",
     ]
 
     def __init__(self) -> None:
@@ -60,11 +71,36 @@ class MetricsCollector:
     def inc_compaction(self) -> None:
         self.snapshot.compaction_count += 1
 
-    def add_io_reads(self, value: int = 1) -> None:
-        self.snapshot.simulated_io_reads += value
+    def add_logical_write_bytes(self, value: int) -> None:
+        self.snapshot.logical_write_bytes_total += value
 
-    def add_io_writes(self, value: int = 1) -> None:
-        self.snapshot.simulated_io_writes += value
+    def add_wal_write_bytes(self, value: int) -> None:
+        self.snapshot.wal_write_bytes_total += value
+        self.snapshot.actual_disk_write_bytes_total += value
+
+    def add_flush_write_bytes(self, data_bytes: int, meta_bytes: int, bloom_bytes: int) -> None:
+        self.snapshot.flush_data_write_bytes_total += data_bytes
+        self.snapshot.flush_meta_write_bytes_total += meta_bytes
+        self.snapshot.flush_bloom_write_bytes_total += bloom_bytes
+        self.snapshot.actual_disk_write_bytes_total += data_bytes + meta_bytes + bloom_bytes
+
+    def add_compaction_write_bytes(self, data_bytes: int, meta_bytes: int, bloom_bytes: int) -> None:
+        self.snapshot.compaction_data_write_bytes_total += data_bytes
+        self.snapshot.compaction_meta_write_bytes_total += meta_bytes
+        self.snapshot.compaction_bloom_write_bytes_total += bloom_bytes
+        self.snapshot.actual_disk_write_bytes_total += data_bytes + meta_bytes + bloom_bytes
+
+    def add_query_bloom_io(self, value: int) -> None:
+        self.snapshot.bloom_read_io_total += value
+        self.snapshot.user_query_read_io_total += value
+
+    def add_query_index_io(self, value: int = 1) -> None:
+        self.snapshot.index_read_io_total += value
+        self.snapshot.user_query_read_io_total += value
+
+    def add_query_data_io(self, value: int = 1) -> None:
+        self.snapshot.data_block_read_io_total += value
+        self.snapshot.user_query_read_io_total += value
 
     def export_json(self, file_path: str) -> str:
         path = Path(file_path)
@@ -101,8 +137,19 @@ class MetricsCollector:
                         "compaction_count": item["compaction_count"],
                         "read_amplification": item["read_amplification"],
                         "write_amplification": item["write_amplification"],
-                        "simulated_io_reads": item["simulated_io_reads"],
-                        "simulated_io_writes": item["simulated_io_writes"],
+                        "logical_write_bytes_total": item["logical_write_bytes_total"],
+                        "wal_write_bytes_total": item["wal_write_bytes_total"],
+                        "flush_data_write_bytes_total": item["flush_data_write_bytes_total"],
+                        "flush_meta_write_bytes_total": item["flush_meta_write_bytes_total"],
+                        "flush_bloom_write_bytes_total": item["flush_bloom_write_bytes_total"],
+                        "compaction_data_write_bytes_total": item["compaction_data_write_bytes_total"],
+                        "compaction_meta_write_bytes_total": item["compaction_meta_write_bytes_total"],
+                        "compaction_bloom_write_bytes_total": item["compaction_bloom_write_bytes_total"],
+                        "actual_disk_write_bytes_total": item["actual_disk_write_bytes_total"],
+                        "user_query_read_io_total": item["user_query_read_io_total"],
+                        "bloom_read_io_total": item["bloom_read_io_total"],
+                        "index_read_io_total": item["index_read_io_total"],
+                        "data_block_read_io_total": item["data_block_read_io_total"],
                     }
                 )
 
@@ -110,11 +157,11 @@ class MetricsCollector:
 
     def _refresh_amplification(self) -> None:
         gets = self.snapshot.total_gets
-        puts = self.snapshot.total_puts
-
         self.snapshot.read_amplification = (
-            self.snapshot.simulated_io_reads / gets if gets > 0 else 0.0
+            self.snapshot.user_query_read_io_total / gets if gets > 0 else 0.0
         )
         self.snapshot.write_amplification = (
-            self.snapshot.simulated_io_writes / puts if puts > 0 else 0.0
+            self.snapshot.actual_disk_write_bytes_total / self.snapshot.logical_write_bytes_total
+            if self.snapshot.logical_write_bytes_total > 0
+            else 0.0
         )

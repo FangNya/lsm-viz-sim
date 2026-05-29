@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from bisect import bisect_left
+
 from app.core.compaction.base import CompactionResult, CompactionStrategyBase
 from app.schemas import CompactionStrategy, Record, SSTableMeta
 
@@ -7,13 +9,17 @@ from app.schemas import CompactionStrategy, Record, SSTableMeta
 class LCSCompactionStrategy(CompactionStrategyBase):
     """Teaching-oriented simplified Leveled Compaction Strategy (LCS)."""
 
+    @staticmethod
+    def sort_tables_by_key_range(tables: list[SSTableMeta]) -> list[SSTableMeta]:
+        return sorted(tables, key=lambda meta: (meta.min_key, meta.max_key, meta.table_id))
+
     def should_trigger(self, simulator: "LSMSimulator", level: int) -> bool:
         tables = simulator.level_tables.get(level, [])
         if level == 0:
             return len(tables) >= simulator.config.l0_compaction_trigger_tables
 
-        limit = self._level_limit(simulator, level)
-        return len(tables) > limit
+        capacity = self._level_record_capacity(simulator, level)
+        return self._level_record_total(tables) > capacity
 
     def select_inputs(self, simulator: "LSMSimulator", level: int) -> list[SSTableMeta]:
         if level == 0:
@@ -58,7 +64,9 @@ class LCSCompactionStrategy(CompactionStrategyBase):
         for meta in all_inputs:
             simulator.sstable.delete_table_files(meta)
 
-        simulator.level_tables.setdefault(target_level, []).append(output_meta)
+        simulator.level_tables[target_level] = self.sort_tables_by_key_range(
+            simulator.level_tables.get(target_level, []) + [output_meta]
+        )
 
         after = simulator.list_levels()
         return CompactionResult(
@@ -90,9 +98,60 @@ class LCSCompactionStrategy(CompactionStrategyBase):
                 overlaps.append(meta)
         return overlaps
 
-    def _level_limit(self, simulator: "LSMSimulator", level: int) -> int:
-        base = simulator.config.l0_compaction_trigger_tables
-        return max(1, int(base * (simulator.config.level_size_multiplier ** level)))
+    def _level_record_capacity(self, simulator: "LSMSimulator", level: int) -> int:
+        base_run_records = simulator.config.memtable_max_records
+        l0_capacity = base_run_records * simulator.config.l0_compaction_trigger_tables
+        return max(1, int(l0_capacity * (simulator.config.level_size_multiplier ** level)))
+
+    @staticmethod
+    def _level_record_total(tables: list[SSTableMeta]) -> int:
+        return sum(meta.record_count for meta in tables)
+
+    def find_candidate_tables(
+        self,
+        simulator: "LSMSimulator",
+        level: int,
+        key: str,
+    ) -> list[SSTableMeta]:
+        if level <= 0:
+            return list(reversed(simulator.level_tables.get(level, [])))
+
+        tables = self.sort_tables_by_key_range(simulator.level_tables.get(level, []))
+        simulator.level_tables[level] = tables
+        if not tables:
+            return []
+
+        min_keys = [meta.min_key for meta in tables]
+        probe = bisect_left(min_keys, key)
+        candidate_indexes = {probe - 1, probe}
+
+        candidates: list[SSTableMeta] = []
+        seen_ids: set[str] = set()
+        for index in sorted(candidate_indexes):
+            if index < 0 or index >= len(tables):
+                continue
+            meta = tables[index]
+            if meta.min_key <= key <= meta.max_key and meta.table_id not in seen_ids:
+                candidates.append(meta)
+                seen_ids.add(meta.table_id)
+
+                left = index - 1
+                while left >= 0 and tables[left].max_key >= key:
+                    if tables[left].min_key <= key <= tables[left].max_key:
+                        if tables[left].table_id not in seen_ids:
+                            candidates.insert(0, tables[left])
+                            seen_ids.add(tables[left].table_id)
+                    left -= 1
+
+                right = index + 1
+                while right < len(tables) and tables[right].min_key <= key:
+                    if tables[right].min_key <= key <= tables[right].max_key:
+                        if tables[right].table_id not in seen_ids:
+                            candidates.append(tables[right])
+                            seen_ids.add(tables[right].table_id)
+                    right += 1
+
+        return candidates
 
 
 from typing import TYPE_CHECKING

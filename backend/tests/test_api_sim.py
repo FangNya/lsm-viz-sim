@@ -52,13 +52,17 @@ def test_run_workload_and_state_metrics(tmp_path: Path) -> None:
             {"op": "put", "key": "k1", "value": "v1"},
             {"op": "put", "key": "k2", "value": "v2"},
             {"op": "put", "key": "k3", "value": "v3"},
+            {"op": "get", "key": "k2"},
         ]
     }
     run_resp = client.post("/sim/run_workload", json=workload)
     assert run_resp.status_code == 200
     run_payload = run_resp.json()
-    assert run_payload["executed"] == 3
-    assert len(run_payload["step_results"]) == 3
+    assert run_payload["executed"] == 4
+    assert len(run_payload["step_results"]) == 4
+    assert run_payload["step_results"][-1]["op"] == "get"
+    assert run_payload["step_results"][-1]["get_result"]["found"] is True
+    assert run_payload["step_results"][-1]["get_result"]["value"] == "v2"
 
     state = client.get("/sim/state")
     assert state.status_code == 200
@@ -66,6 +70,25 @@ def test_run_workload_and_state_metrics(tmp_path: Path) -> None:
     assert "level_0" in s["levels"]
     assert "total_puts" in s["metrics"]
     assert s["metrics"]["total_puts"] >= 3
+    assert s["metrics"]["total_gets"] >= 1
+
+
+def test_step_supports_get_query(tmp_path: Path) -> None:
+    _set_temp_config(tmp_path)
+    client.post("/sim/reset")
+
+    put_resp = client.post("/sim/step", json={"operation": {"op": "put", "key": "demo", "value": "value"}})
+    assert put_resp.status_code == 200
+    assert put_resp.json()["op"] == "put"
+
+    get_resp = client.post("/sim/step", json={"operation": {"op": "get", "key": "demo"}})
+    assert get_resp.status_code == 200
+    payload = get_resp.json()
+    assert payload["op"] == "get"
+    assert payload["put_result"] is None
+    assert payload["get_result"]["found"] is True
+    assert payload["get_result"]["value"] == "value"
+    assert payload["get_result"]["source"] in {"memtable", "sstable"}
 
 
 def test_export_trace_json_and_csv(tmp_path: Path) -> None:
@@ -84,3 +107,23 @@ def test_export_trace_json_and_csv(tmp_path: Path) -> None:
     csv_payload = export_csv.json()
     assert csv_payload["format"] == "csv"
     assert "event_id,event_type,timestamp,seq,payload_json" in csv_payload["content"]
+
+
+def test_export_metrics_json_and_csv(tmp_path: Path) -> None:
+    _set_temp_config(tmp_path)
+    client.post("/sim/reset")
+    client.post("/sim/step", json={"operation": {"op": "put", "key": "x", "value": "1"}})
+    client.post("/sim/step", json={"operation": {"op": "get", "key": "x"}})
+
+    export_json = client.get("/sim/export/metrics", params={"format": "json"})
+    assert export_json.status_code == 200
+    json_payload = export_json.json()
+    assert json_payload["format"] == "json"
+    assert "\"snapshot\"" in json_payload["content"]
+    assert "\"history\"" in json_payload["content"]
+
+    export_csv = client.get("/sim/export/metrics", params={"format": "csv"})
+    assert export_csv.status_code == 200
+    csv_payload = export_csv.json()
+    assert csv_payload["format"] == "csv"
+    assert "timestamp,reason,total_puts,total_gets" in csv_payload["content"]

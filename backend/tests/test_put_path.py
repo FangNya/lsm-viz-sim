@@ -36,6 +36,18 @@ def test_put_writes_memtable_and_seq_increments(tmp_path: Path) -> None:
     assert first.seq == 1
     assert second.seq == 2
     assert simulator.memtable.get("k1") == "v2"
+    assert simulator.memtable.size_records == 2
+
+
+def test_duplicate_versions_count_toward_flush_threshold(tmp_path: Path) -> None:
+    config = LSMConfig(wal_dir=str(tmp_path / "wal"), memtable_max_records=2, memtable_max_bytes=10_000)
+    simulator = LSMSimulator(config=config)
+
+    simulator.put("dup", "v1")
+    result = simulator.put("dup", "v2")
+
+    assert result.needs_flush is True
+    assert result.memtable_size_records == 2
 
 
 def test_needs_flush_false_before_threshold(tmp_path: Path) -> None:
